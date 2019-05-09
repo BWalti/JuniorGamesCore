@@ -50,7 +50,7 @@
 
         protected override async Task Start()
         {
-            await this.stateMachine.Initialize(GameChooserState.StandBy);
+            this.stateMachine.Initialize(GameChooserState.StandBy);
             await this.stateMachine.Start();
             await this.stateMachine.Fire(GameChooserEvent.ButtonPressed);
 
