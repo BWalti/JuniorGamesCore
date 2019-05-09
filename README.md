@@ -6,11 +6,24 @@ And also because I just wanted to play around with the Raspberry Pi and I now ha
 
 ![LED-Logik][logic]
 
-[buttons]: https://github.com/BWalti/JuniorGamesCore/raw/master/buttons.jpg "Big shiny buttons - reminds me of arcade game machines"
+![Driver-Board][driver-board]
+
+![soldering][soldering]
+
+![connections][connections]
+
+![box][box]
+
+[buttons]: https://github.com/BWalti/JuniorGamesCore/raw/master/buttons.jpeg "Big shiny buttons - reminds me of arcade game machines"
+
 [logic]: https://github.com/BWalti/JuniorGamesCore/raw/master/basic-logic.jpg "LED logic with transistor to limit GPIO current"
-[driver-board]: https://github.com/BWalti/JuniorGamesCore/raw/master/driver-board.jpg "board driving all the LEDs (without drawing to much energy from the GPIOs)"
-[soldering]: https://github.com/BWalti/JuniorGamesCore/raw/master/soldering.jpg "I guess that could have been done better.."
-[connections]: https://github.com/BWalti/JuniorGamesCore/raw/master/connections.jpg "Connecting all the stuff with suboptimal parts and wires (would have preferred color coded wires and probably less sturdy ones - and longer ones to be able to lay them out cleanly)"
+
+[driver-board]: https://github.com/BWalti/JuniorGamesCore/raw/master/driver-board.jpeg "board driving all the LEDs (without drawing to much energy from the GPIOs)"
+
+[soldering]: https://github.com/BWalti/JuniorGamesCore/raw/master/soldering.jpeg "I guess that could have been done better.."
+
+[connections]: https://github.com/BWalti/JuniorGamesCore/raw/master/connections.jpeg "Connecting all the stuff with suboptimal parts and wires (would have preferred color coded wires and probably less sturdy ones - and longer ones to be able to lay them out cleanly)"
+
 [box]: https://github.com/BWalti/JuniorGamesCore/raw/master/box.jpg "Top side, 10 buttons in 5 colors (maybe for two players)"
 
 # Nerd-Fact
