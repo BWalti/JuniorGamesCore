@@ -2,9 +2,6 @@
 {
     using System;
     using System.Device.Gpio;
-    using System.Device.Gpio.Drivers;
-    using System.Reactive.Linq;
-    using System.Threading;
     using System.Threading.Tasks;
     using Castle.MicroKernel.Registration;
     using Castle.Windsor;
@@ -27,8 +24,6 @@
 
             Log.Information("Serilog configured...");
 
-            //EnsureAllPinsClosed();
-
             using (var bootstrapper = new GameBootstrapper(HardwareRegistrations))
             {
                 Log.Information("Bootstrapper created...");
@@ -38,39 +33,9 @@
 
                 await gameBox.BlinkAll(3);
 
-                //var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-                //var token = cts.Token;
-
-                //await Task.Delay(TimeSpan.FromSeconds(30));
-
-                //await gameBox.OnButton.ForEachAsync(
-                //    b => { Log.Information($"{b.IsPressed}: {b.Identifier.Color}/{b.Identifier.Player}"); },
-                //    token);
-
                 using (var chooser = bootstrapper.GameChooser())
                 {
                     await chooser.Start(TimeSpan.FromMinutes(5));
-                }
-            }
-        }
-
-        private static void EnsureAllPinsClosed()
-        {
-            using (var gpioController = new GpioController())
-            {
-                var pins = gpioController.PinCount;
-                for (var i = 0; i < pins; i++)
-                {
-                    if (gpioController.IsPinOpen(i))
-                    {
-                        var pinMode = gpioController.GetPinMode(i);
-                        Log.Verbose($"{i} = {pinMode}");
-                        gpioController.ClosePin(i);
-                    }
-                    else
-                    {
-                        Log.Verbose($"{i} is not open");
-                    }
                 }
             }
         }
