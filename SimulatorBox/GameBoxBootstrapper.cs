@@ -6,11 +6,18 @@ namespace SimulatorBox
     using System.Windows;
 
     using Caliburn.Micro;
+    using Serilog;
+    using Serilog.Sinks.SystemConsole.Themes;
 
     public class GameBoxBootstrapper : BootstrapperBase
     {
         public GameBoxBootstrapper()
         {
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+                .MinimumLevel.Information()
+                .CreateLogger();
+
             ConventionManager.AddElementConvention<UIElement>(UIElement.VisibilityProperty,
                                                               "Visibility",
                                                               "VisibilityChanged");

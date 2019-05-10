@@ -34,13 +34,14 @@
             var client = bridgeIPs.FirstOrDefault(ip => ip.IpAddress == this.options.IpAddress);
             if (client != null)
             {
-                var localHueClient = new LocalHueClient(client.IpAddress, this.options.Key);
+                var localHueClient = new LocalHueClient(client.IpAddress, this.options.Username);
+
                 if (await localHueClient.CheckConnection())
                 {
                     var lights = await localHueClient.GetLightsAsync();
                     foreach (var light in lights)
                     {
-                        Log.Information($"{light.Name}: {light.State}");
+                        Log.Information($"{light.Name}: {light.State.On}");
                     }
                 }
             }
