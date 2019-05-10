@@ -1,4 +1,4 @@
-﻿namespace JuniorGamesCore
+﻿namespace JuniorGames
 {
     using System;
     using System.Collections.Generic;

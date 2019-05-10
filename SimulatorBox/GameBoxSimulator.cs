@@ -35,6 +35,8 @@
             this.OnButtonUp = this.LedButtonPinPins.Select(lbpp => lbpp.ButtonUp).Merge();
 
             this.OnButton = this.LedButtonPinPins.Select(lbpp => lbpp.Button).Merge();
+
+            this.Reset = Observable.Empty<IEnumerable<ButtonPressedEventArgs>>();
         }
 
         public override IObservable<ButtonPressedEventArgs> OnButton { get; }

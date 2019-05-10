@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28803.156
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuniorGamesCore", "JuniorGamesCore\JuniorGamesCore.csproj", "{62953512-44AE-412A-9BE0-F2E21537F8EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuniorGames", "JuniorGamesCore\JuniorGames.csproj", "{62953512-44AE-412A-9BE0-F2E21537F8EF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimulatorBox", "SimulatorBox\SimulatorBox.csproj", "{DA137FAD-BBFC-45DA-8481-8F75D4BA9608}"
 EndProject
