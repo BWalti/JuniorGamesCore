@@ -1,0 +1,81 @@
+﻿<Window
+    x:Class="SimulatorBox.ShellView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cal="http://www.caliburnproject.org"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="ShellView"
+    Width="500"
+    Height="500"
+    mc:Ignorable="d">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem cal:Message.Attach="Start" Header="_Start" />
+        </Menu>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border
+                Grid.Row="0"
+                Grid.RowSpan="2"
+                BorderBrush="Black"
+                BorderThickness="1" />
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <ContentControl x:Name="GreenOne" />
+                <ContentControl x:Name="YellowOne" Grid.Column="1" />
+                <ContentControl x:Name="RedOne" Grid.Column="2" />
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <ContentControl x:Name="BlueOne" />
+                <ContentControl x:Name="WhiteOne" Grid.Column="1" />
+            </Grid>
+
+            <Border
+                Grid.Row="2"
+                Grid.RowSpan="2"
+                BorderBrush="Black"
+                BorderThickness="1" />
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <ContentControl x:Name="WhiteTwo" />
+                <ContentControl x:Name="BlueTwo" Grid.Column="1" />
+            </Grid>
+
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <ContentControl x:Name="RedTwo" />
+                <ContentControl x:Name="YellowTwo" Grid.Column="1" />
+                <ContentControl x:Name="GreenTwo" Grid.Column="2" />
+            </Grid>
+        </Grid>
+    </DockPanel>
+</Window>

@@ -1,4 +1,4 @@
-﻿namespace JuniorGames.Hardware
+﻿namespace JuniorGamesCore
 {
     using System;
     using System.Collections.Generic;
@@ -12,11 +12,6 @@
     public sealed class GameBox : GameBoxBase
     {
         private readonly IDictionary<ButtonIdentifier, ILightableButton> lookup;
-
-        // finding out if a button has been pressed for a specific time:
-        // var debounced = buttonUpDown.Debounce(timeSpan).Filter(event => event.IsPressed)
-        // zip these with timeouts to find out if all have been pressed at the same time?
-        // or Merge().TakeUntil( Timeout() ) 
 
         public GameBox(GameBoxOptions options, GpioController gpioController) : base(options)
         {
@@ -74,6 +69,18 @@
             this.OnButton = this.LedButtonPinPins
                 .Select(lbpp => lbpp.Button)
                 .Merge();
+
+            var ctrlAltDeleteButtons = new[] {GreenOneButtonIdentifier, GreenTwoButtonIdentifier};
+
+            var pressedCtrlAltDeleteButtons = ctrlAltDeleteButtons
+                .Select(id => this.lookup[id].Button)
+                .CombineLatest()
+                .Throttle(TimeSpan.FromSeconds(1))
+                .Where(latest => latest.All(button => button.IsPressed));
+
+            pressedCtrlAltDeleteButtons.Subscribe(list => { Log.Information("CtrlAltDelete happened!"); });
+
+            this.Reset = pressedCtrlAltDeleteButtons;
         }
 
         public override IObservable<ButtonPressedEventArgs> OnButton { get; }
@@ -81,6 +88,8 @@
         public override IObservable<ButtonIdentifier> OnButtonUp { get; }
 
         public override IObservable<ButtonIdentifier> OnButtonDown { get; }
+
+        public override IObservable<IEnumerable<ButtonPressedEventArgs>> Reset { get; }
 
         public override IObservable<bool> IdleTimer { get; set; }
 

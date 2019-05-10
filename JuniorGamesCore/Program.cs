@@ -7,7 +7,6 @@
     using Castle.Windsor;
     using JuniorGames.Core;
     using JuniorGames.Core.Framework;
-    using JuniorGames.Hardware;
     using Serilog;
     using Serilog.Sinks.SystemConsole.Themes;
 
@@ -15,18 +14,16 @@
     {
         private static async Task Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
-
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                .MinimumLevel.Verbose()
+                .MinimumLevel.Information()
                 .CreateLogger();
 
-            Log.Information("Serilog configured...");
+            Log.Verbose("Serilog configured...");
 
             using (var bootstrapper = new GameBootstrapper(HardwareRegistrations))
             {
-                Log.Information("Bootstrapper created...");
+                Log.Verbose("Bootstrapper created...");
 
                 var gameBox = bootstrapper.GameBox;
                 Log.Information("gameBox created!");
@@ -42,7 +39,7 @@
 
         private static void HardwareRegistrations(IWindsorContainer container)
         {
-            Log.Information("Creating GpioController...");
+            Log.Verbose("Creating GpioController...");
             var gpioController = new GpioController(PinNumberingScheme.Logical);
 
             container.Register(Component.For<GpioController>().Instance(gpioController).LifestyleSingleton());

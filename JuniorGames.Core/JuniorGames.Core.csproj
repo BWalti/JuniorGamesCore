@@ -1,25 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
-    <ApplicationIcon />
-    <StartupObject />
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Appccelerate.StateMachine" Version="4.4.0" />
     <PackageReference Include="Castle.Windsor" Version="5.0.0" />
-    <PackageReference Include="Iot.Device.Bindings" Version="0.1.0-prerelease.19171.3" />
     <PackageReference Include="Q42.HueApi" Version="3.10.1" />
     <PackageReference Include="Serilog" Version="2.8.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
-    <PackageReference Include="System.Device.Gpio" Version="0.1.0-prerelease.19171.3" />
     <PackageReference Include="System.Reactive" Version="4.1.5" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\JuniorGames.Core\JuniorGames.Core.csproj" />
   </ItemGroup>
 
 </Project>

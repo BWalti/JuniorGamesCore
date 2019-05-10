@@ -19,13 +19,13 @@
         private readonly IDisposable idleSubscription;
         private readonly TimeSpan idleTimeout;
         private readonly TimeSpan maximumGameTime;
-        private readonly AsyncPassiveStateMachine<GameChooserState, GameChooserEvent> stateMachine;
         private readonly Dictionary<ButtonIdentifier, Func<IGame>> registeredGames;
+        private readonly AsyncPassiveStateMachine<GameChooserState, GameChooserEvent> stateMachine;
 
         private readonly TaskCompletionSource<object> taskCompletionSource;
         private IGame game;
         private IDisposable temporarySubscription;
-        private Dictionary<ButtonIdentifier, Func<IGame>> gameRegistration;
+        private readonly object lockObj = new object();
 
         public GameChooserGame(GameBootstrapper gameBootstrapper, IGameBox gameBox, GameChooserOptions options) :
             base(gameBox)
@@ -37,14 +37,17 @@
             this.maximumGameTime = TimeSpan.FromMinutes(options.MaximumGameTimeMinutes);
             this.idleTimeout = TimeSpan.FromSeconds(this.GameBox.Options.IdleTimeout);
 
-            this.idleSubscription = this.GameBox.IdleTimer.Subscribe(next => this.SetIdle(null));
+            this.idleSubscription = this.GameBox.Reset
+                .Select(buttons => true)
+                .Merge(this.GameBox.IdleTimer)
+                .Subscribe(next => this.SetIdle(null));
 
             this.registeredGames = new Dictionary<ButtonIdentifier, Func<IGame>>
             {
-                { GameBoxBase.GreenOneButtonIdentifier, () => this.gameBootstrapper.AfterButner() },
-                { GameBoxBase.YellowOneButtonIdentifier, () => this.gameBootstrapper.LightifyOnButtonPress() },
-                { GameBoxBase.RedOneButtonIdentifier, () => this.gameBootstrapper.ChainGame(5) },
-                { GameBoxBase.BlueOneButtonIdentifier, () => this.gameBootstrapper.HueGame() },
+                {GameBoxBase.GreenOneButtonIdentifier, () => this.gameBootstrapper.AfterButner()},
+                {GameBoxBase.YellowOneButtonIdentifier, () => this.gameBootstrapper.LightifyOnButtonPress()},
+                {GameBoxBase.RedOneButtonIdentifier, () => this.gameBootstrapper.ChainGame(5)},
+                {GameBoxBase.BlueOneButtonIdentifier, () => this.gameBootstrapper.HueGame()}
             };
         }
 
@@ -59,13 +62,7 @@
 
         private async Task Sleep()
         {
-            if (this.game != null)
-            {
-                this.game.Stop();
-                this.game.Dispose();
-
-                this.game = null;
-            }
+            this.CleanRunningGame();
 
             await this.GameBox.SetAll(false);
 
@@ -75,15 +72,32 @@
                 .Subscribe(this.WakeUpButtonPressed);
         }
 
+        private void CleanRunningGame()
+        {
+            lock (this.lockObj)
+            {
+                if (this.game != null)
+                {
+                    this.game.Stop();
+                    this.game.Dispose();
+
+                    this.game = null;
+                }
+            }
+        }
+
         private async void WakeUpButtonPressed(ButtonPressedEventArgs args)
         {
+            this.CleanRunningGame();
+
             this.temporarySubscription.Dispose();
             await this.stateMachine.Fire(GameChooserEvent.ButtonPressed);
         }
 
         private Task CreateGame(ButtonIdentifier button)
         {
-            this.game = null;
+            this.CleanRunningGame();
+
             if (this.registeredGames.TryGetValue(button, out var gameFactory))
             {
                 this.game = gameFactory();
@@ -92,19 +106,10 @@
             return Task.CompletedTask;
         }
 
-        private void RegisterGames()
-        {
-            this.gameRegistration = new Dictionary<ButtonIdentifier, Func<IGame>>
-            {
-                {GameBoxBase.GreenOneButtonIdentifier, () => this.gameBootstrapper.AfterButner()},
-                {GameBoxBase.YellowOneButtonIdentifier, () => this.gameBootstrapper.LightifyOnButtonPress()},
-                {GameBoxBase.RedOneButtonIdentifier, () => this.gameBootstrapper.ChainGame(5)},
-                {GameBoxBase.BlueOneButtonIdentifier, () => this.gameBootstrapper.TwoPlayers()}
-            };
-        }
-
         private async Task WakeUp()
         {
+            this.CleanRunningGame();
+
             Log.Information("WakeUp called");
 
             using (var ledDemo = this.gameBootstrapper.LedDemo())
@@ -126,13 +131,7 @@
 
         private async void SetIdle(Exception obj)
         {
-            if (this.game != null)
-            {
-                this.game.Stop();
-                this.game.Dispose();
-
-                this.game = null;
-            }
+            this.CleanRunningGame();
 
             await this.stateMachine.Fire(GameChooserEvent.Idle);
         }
@@ -201,7 +200,7 @@
                 {
                 }
 
-                this.game.Dispose();
+                this.CleanRunningGame();
                 await this.stateMachine.Fire(GameChooserEvent.GameFinished);
             }
             else

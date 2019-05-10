@@ -174,7 +174,7 @@
 
                     this.CancellationToken.ThrowIfCancellationRequested();
 
-                    // now await, that it's not pressed anymore:
+                    // now await until it's not pressed anymore:
                     await this.GameBox.OnButtonUp.FirstAsync(lbpp => lbpp.Equals(result)).RunAsync(tokenSource.Token);
 
                     if (chainId.Equals(result))

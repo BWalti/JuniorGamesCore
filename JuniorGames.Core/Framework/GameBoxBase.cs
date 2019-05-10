@@ -35,6 +35,8 @@
         public GameBoxOptions Options { get; }
 
         public abstract IObservable<ButtonPressedEventArgs> OnButton { get; }
+        
+        public abstract IObservable<IEnumerable<ButtonPressedEventArgs>> Reset { get; }
 
         public abstract IObservable<ButtonIdentifier> OnButtonUp { get; }
 

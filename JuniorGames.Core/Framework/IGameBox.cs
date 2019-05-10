@@ -10,6 +10,8 @@
 
         IObservable<ButtonPressedEventArgs> OnButton { get; }
 
+        IObservable<IEnumerable<ButtonPressedEventArgs>> Reset { get; }
+
         IObservable<ButtonIdentifier> OnButtonUp { get; }
 
         IObservable<ButtonIdentifier> OnButtonDown { get; }

@@ -1,4 +1,4 @@
-﻿namespace JuniorGames.Hardware
+﻿namespace JuniorGamesCore
 {
     using System;
     using System.Device.Gpio;
