@@ -47,7 +47,7 @@
 
         private void CreateObservableButtons()
         {
-            Log.Information("Registering button callback...");
+            Log.Information("Register button callback...");
             this.gpioController.RegisterCallbackForPinValueChangedEvent(this.Config.ButtonPin, PinEventTypes.Rising | PinEventTypes.Falling, this.OnButtonChanged);
 
             var downSource = Observable.FromEvent<ButtonIdentifier>(
