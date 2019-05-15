@@ -7,6 +7,7 @@
     using JuniorGames.Core.Framework;
     using Q42.HueApi;
     using Q42.HueApi.Interfaces;
+    using Serilog;
 
     public class HueGame : GameBase
     {
@@ -29,25 +30,38 @@
             // list available (& connected) lights in Player 2 field
             // upon light button: toggle light from on-off and off-random_on (hue / saturation / intensity)
 
-            IBridgeLocator locator = new HttpBridgeLocator();
-            var bridgeIPs = (await locator.LocateBridgesAsync(TimeSpan.FromSeconds(5))).ToList();
+            Log.Information("Starting HueGame...");
 
-            this.PlayerOneButtons = this.GameBox.LedButtonPinPins.Where(b => b.Player == Player.One).ToList();
-            this.PlayerTwoButtons = this.GameBox.LedButtonPinPins.Where(b => b.Player == Player.Two).ToList();
-
-            var hueStateMachines = bridgeIPs.Zip(this.PlayerOneButtons,
-                (bridge, button) => new HueStateMachine(this.GameBox, bridge, button, this.PlayerTwoButtons,
-                    this.CancellationToken)).ToList();
-            foreach (var hueStateMachine in hueStateMachines)
+            try
             {
-                hueStateMachine.OnSelected += () => hueStateMachines
-                    .Except(new[] {hueStateMachine})
-                    .ToList()
-                    .ForEach(async hsm => await hsm.DoUnselect());
-            }
+                IBridgeLocator locator = new HttpBridgeLocator();
+                var bridgeIPs = (await locator.LocateBridgesAsync(TimeSpan.FromSeconds(30))).ToList();
 
-            await Task.WhenAll(hueStateMachines.Select(hsm => hsm.Start()).ToArray());
-            await Task.Delay(TimeSpan.FromMinutes(3), this.CancellationToken);
+                Log.Information($"Found {bridgeIPs.Count} bridges");
+
+                this.PlayerOneButtons = this.GameBox.LedButtonPinPins.Where(b => b.Player == Player.One).ToList();
+                this.PlayerTwoButtons = this.GameBox.LedButtonPinPins.Where(b => b.Player == Player.Two).ToList();
+
+                var hueStateMachines = bridgeIPs.Zip(this.PlayerOneButtons,
+                    (bridge, button) => new HueStateMachine(this.GameBox, bridge, button, this.PlayerTwoButtons,
+                        this.CancellationToken)).ToList();
+                foreach (var hueStateMachine in hueStateMachines)
+                {
+                    hueStateMachine.OnSelected += () => hueStateMachines
+                        .Except(new[] {hueStateMachine})
+                        .ToList()
+                        .ForEach(async hsm => await hsm.DoUnselect());
+                }
+
+                Log.Information("Created HueStateMachines");
+
+                await Task.WhenAll(hueStateMachines.Select(hsm => hsm.Start()).ToArray());
+                await Task.Delay(TimeSpan.FromMinutes(3), this.CancellationToken);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Exception while playing HueGame...");
+            }
         }
     }
 

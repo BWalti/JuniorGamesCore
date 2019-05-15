@@ -47,7 +47,7 @@
 
         private void CreateObservableButtons()
         {
-            Log.Information("Register button callback...");
+            Log.Verbose("Register button callback...");
             this.gpioController.RegisterCallbackForPinValueChangedEvent(this.Config.ButtonPin, PinEventTypes.Rising | PinEventTypes.Falling, this.OnButtonChanged);
 
             var downSource = Observable.FromEvent<ButtonIdentifier>(
@@ -68,7 +68,7 @@
 
         private void OnButtonChanged(object sender, PinValueChangedEventArgs args)
         {
-            Log.Information($"Gpio Changed: {args.PinNumber} = {args.ChangeType}");
+            Log.Verbose($"Gpio Changed: {args.PinNumber} = {args.ChangeType}");
             if (args.PinNumber != this.Config.ButtonPin)
             {
                 return;
@@ -91,7 +91,7 @@
         
         protected virtual void Dispose(bool isDisposing)
         {
-            Log.Information($"Disposing Lightable Button: {this.Config.Identifier.Color} {this.Config.Identifier.Player}");
+            Log.Verbose($"Disposing Lightable Button: {this.Config.Identifier.Color} {this.Config.Identifier.Player}");
             if (isDisposing && !this.isDisposed)
             {
                 this.isDisposed = true;
