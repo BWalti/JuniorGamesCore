@@ -29,10 +29,10 @@
             return this.container.Resolve<ChainGame>();
         }
 
-        public IGame HueGame()
-        {
-            return this.container.Resolve<HueGame>();
-        }
+        //public IGame HueGame()
+        //{
+        //    return this.container.Resolve<HueGame>();
+        //}
 
         public IGame LedDemo(int lightMs = 200, int darkMs = 100)
         {

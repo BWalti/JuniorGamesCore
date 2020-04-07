@@ -6,9 +6,9 @@
     using System.Reactive.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using Appccelerate.StateMachine;
     using JuniorGames.Core.Framework;
     using Serilog;
+    using Stateless;
 
     /// <summary>
     ///     This game starts with displaying a "chain" (starting with one element) which you have to type in afterwards.
@@ -27,7 +27,7 @@
         private int games;
         private int index;
         private int retries;
-        private AsyncPassiveStateMachine<ChainGameState, ChainGameEvent> stateMachine;
+        private StateMachine<ChainGameState, ChainGameEvent> stateMachine;
 
         public ChainGame(IGameBox box, ChainGameOptions options) : base(box)
         {
@@ -41,68 +41,53 @@
         {
             Log.Information("Starting ChainGame...");
 
-            this.stateMachine = new AsyncPassiveStateMachine<ChainGameState, ChainGameEvent>();
-            this.stateMachine.In(ChainGameState.Initialized)
-                .On(ChainGameEvent.Yes)
-                .Goto(ChainGameState.StepAdded)
-                .Execute(this.Initialize);
+            this.stateMachine = new StateMachine<ChainGameState, ChainGameEvent>(ChainGameState.Initialized);
+            this.stateMachine.Configure(ChainGameState.Initialized)
+                .Permit(ChainGameEvent.Yes, ChainGameState.StepAdded)
+                .OnEntryAsync(this.Initialize);
 
-            this.stateMachine.In(ChainGameState.StepAdded)
-                .On(ChainGameEvent.Yes)
-                .Goto(ChainGameState.ChainDisplayed)
-                .Execute(this.DisplayChain);
+            this.stateMachine.Configure(ChainGameState.StepAdded)
+                .Permit(ChainGameEvent.Yes, ChainGameState.ChainDisplayed)
+                .OnEntryAsync(this.DisplayChain);
 
-            this.stateMachine.In(ChainGameState.ChainDisplayed)
-                .On(ChainGameEvent.Yes)
-                .Goto(ChainGameState.InputGood)
-                .Execute(this.CheckOneInput);
+            this.stateMachine.Configure(ChainGameState.ChainDisplayed)
+                .Permit(ChainGameEvent.Yes, ChainGameState.InputGood)
+                .OnEntryAsync(this.CheckOneInput);
 
-            this.stateMachine.In(ChainGameState.InputGood)
-                .On(ChainGameEvent.Yes)
-                .Goto(ChainGameState.IsEndOfChain)
-                .Execute(this.CheckEndOfChain)
-                .On(ChainGameEvent.No)
-                .Goto(ChainGameState.HasRetryLeft)
-                .Execute(this.HasRetryLeft);
+            this.stateMachine.Configure(ChainGameState.InputGood)
+                .Permit(ChainGameEvent.Yes,ChainGameState.IsEndOfChain)
+                .OnEntryAsync(this.CheckEndOfChain)
+                .Permit(ChainGameEvent.No,ChainGameState.HasRetryLeft)
+                .OnEntryAsync(this.HasRetryLeft);
 
-            this.stateMachine.In(ChainGameState.IsEndOfChain)
-                .On(ChainGameEvent.Yes)
-                .Goto(ChainGameState.StepAdded)
-                .Execute(this.AddStep)
-                .On(ChainGameEvent.No)
-                .Goto(ChainGameState.InputGood)
-                .Execute(this.CheckOneInput);
+            this.stateMachine.Configure(ChainGameState.IsEndOfChain)
+                .Permit(ChainGameEvent.Yes, ChainGameState.StepAdded)
+                .OnEntryAsync(this.AddStep)
+                .Permit(ChainGameEvent.No, ChainGameState.InputGood)
+                .OnEntryAsync(this.CheckOneInput);
 
-            this.stateMachine.In(ChainGameState.HasRetryLeft)
-                .On(ChainGameEvent.Yes)
-                .Goto(ChainGameState.ChainDisplayed)
-                .Execute(this.DisplayChain)
-                .On(ChainGameEvent.No)
-                .Goto(ChainGameState.HasGameLeft)
-                .Execute(this.HasGameLeft);
+            this.stateMachine.Configure(ChainGameState.HasRetryLeft)
+                .Permit(ChainGameEvent.Yes, ChainGameState.ChainDisplayed)
+                .OnEntryAsync(this.DisplayChain)
+                .Permit(ChainGameEvent.No, ChainGameState.HasGameLeft)
+                .OnEntryAsync(this.HasGameLeft);
 
-            this.stateMachine.In(ChainGameState.HasGameLeft)
-                .On(ChainGameEvent.Yes)
-                .Goto(ChainGameState.ChainCleared)
-                .Execute(this.Initialize)
-                .On(ChainGameEvent.No)
-                .Goto(ChainGameState.Finished)
-                .Execute(this.Finished);
+            this.stateMachine.Configure(ChainGameState.HasGameLeft)
+                .Permit(ChainGameEvent.Yes, ChainGameState.ChainCleared)
+                .OnEntryAsync(this.Initialize)
+                .Permit(ChainGameEvent.No, ChainGameState.Finished)
+                .OnEntryAsync(this.Finished);
 
-            this.stateMachine.In(ChainGameState.ChainCleared)
-                .On(ChainGameEvent.Yes)
-                .Goto(ChainGameState.StepAdded)
-                .Execute(this.AddStep);
+            this.stateMachine.Configure(ChainGameState.ChainCleared)
+                .Permit(ChainGameEvent.Yes, ChainGameState.StepAdded)
+                .OnEntryAsync(this.AddStep);
 
-            this.stateMachine.Initialize(ChainGameState.Initialized);
-            await this.stateMachine.Start();
-            await this.stateMachine.Fire(ChainGameEvent.Yes);
+            await this.stateMachine.FireAsync(ChainGameEvent.Yes);
         }
 
-        private Task Finished()
+        private async Task Finished()
         {
-            this.stateMachine.Stop();
-            return Task.CompletedTask;
+            await this.stateMachine.DeactivateAsync();
         }
 
         private async Task Initialize()
@@ -119,11 +104,11 @@
             this.CancellationToken.ThrowIfCancellationRequested();
             if (this.games < this.options.Games)
             {
-                await this.stateMachine.Fire(ChainGameEvent.Yes);
+                await this.stateMachine.FireAsync(ChainGameEvent.Yes);
             }
             else
             {
-                await this.stateMachine.Fire(ChainGameEvent.No);
+                await this.stateMachine.FireAsync(ChainGameEvent.No);
             }
         }
 
@@ -135,11 +120,11 @@
 
             if (this.retries++ < this.options.Retries)
             {
-                await this.stateMachine.Fire(ChainGameEvent.Yes);
+                await this.stateMachine.FireAsync(ChainGameEvent.Yes);
             }
             else
             {
-                await this.stateMachine.Fire(ChainGameEvent.No);
+                await this.stateMachine.FireAsync(ChainGameEvent.No);
             }
         }
 
@@ -150,11 +135,11 @@
             {
                 await Task.Delay(500);
                 await this.Good();
-                await this.stateMachine.Fire(ChainGameEvent.Yes);
+                await this.stateMachine.FireAsync(ChainGameEvent.Yes);
             }
             else
             {
-                await this.stateMachine.Fire(ChainGameEvent.No);
+                await this.stateMachine.FireAsync(ChainGameEvent.No);
             }
         }
 
@@ -179,16 +164,16 @@
 
                     if (chainId.Equals(result))
                     {
-                        await this.stateMachine.Fire(ChainGameEvent.Yes);
+                        await this.stateMachine.FireAsync(ChainGameEvent.Yes);
                         return;
                     }
 
-                    await this.stateMachine.Fire(ChainGameEvent.No);
+                    await this.stateMachine.FireAsync(ChainGameEvent.No);
                 }
             }
             catch (Exception)
             {
-                await this.stateMachine.Fire(ChainGameEvent.No);
+                await this.stateMachine.FireAsync(ChainGameEvent.No);
             }
         }
 
@@ -207,7 +192,7 @@
                 await Task.Delay(400);
             }
 
-            await this.stateMachine.Fire(ChainGameEvent.Yes);
+            await this.stateMachine.FireAsync(ChainGameEvent.Yes);
         }
 
         private async Task AddStep()
@@ -219,7 +204,7 @@
 
             this.chain.Add(randomButton);
 
-            await this.stateMachine.Fire(ChainGameEvent.Yes);
+            await this.stateMachine.FireAsync(ChainGameEvent.Yes);
         }
 
         private ILightableButton RandomButton()

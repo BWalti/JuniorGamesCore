@@ -5,10 +5,9 @@
     using System.Linq;
     using System.Reactive.Linq;
     using System.Threading.Tasks;
-    using Appccelerate.StateMachine;
-    using Appccelerate.StateMachine.AsyncMachine;
     using JuniorGames.Core.Framework;
     using Serilog;
+    using Stateless;
 
     /// <summary>
     ///     Not really a game, just providing some kind of "menu" to choose (and start) a game.
@@ -20,12 +19,13 @@
         private readonly TimeSpan idleTimeout;
         private readonly TimeSpan maximumGameTime;
         private readonly Dictionary<ButtonIdentifier, Func<IGame>> registeredGames;
-        private readonly AsyncPassiveStateMachine<GameChooserState, GameChooserEvent> stateMachine;
+        private readonly StateMachine<GameChooserState, GameChooserEvent> stateMachine;
 
         private readonly TaskCompletionSource<object> taskCompletionSource;
         private IGame game;
         private IDisposable temporarySubscription;
         private readonly object lockObj = new object();
+        private StateMachine<GameChooserState, GameChooserEvent>.TriggerWithParameters<ButtonIdentifier> buttonPressedWithParameter;
 
         public GameChooserGame(GameBootstrapper gameBootstrapper, IGameBox gameBox, GameChooserOptions options) :
             base(gameBox)
@@ -47,15 +47,13 @@
                 {GameBoxBase.GreenOneButtonIdentifier, () => this.gameBootstrapper.AfterButner()},
                 {GameBoxBase.YellowOneButtonIdentifier, () => this.gameBootstrapper.LightifyOnButtonPress()},
                 {GameBoxBase.RedOneButtonIdentifier, () => this.gameBootstrapper.ChainGame(5)},
-                {GameBoxBase.BlueOneButtonIdentifier, () => this.gameBootstrapper.HueGame()}
+                //{GameBoxBase.BlueOneButtonIdentifier, () => this.gameBootstrapper.HueGame()}
             };
         }
 
         protected override async Task Start()
         {
-            this.stateMachine.Initialize(GameChooserState.StandBy);
-            await this.stateMachine.Start();
-            await this.stateMachine.Fire(GameChooserEvent.ButtonPressed);
+            await this.stateMachine.FireAsync(GameChooserEvent.ButtonPressed);
 
             await this.taskCompletionSource.Task;
         }
@@ -91,10 +89,10 @@
             this.CleanRunningGame();
 
             this.temporarySubscription.Dispose();
-            await this.stateMachine.Fire(GameChooserEvent.ButtonPressed);
+            await this.stateMachine.FireAsync(GameChooserEvent.ButtonPressed);
         }
 
-        private Task CreateGame(ButtonIdentifier button)
+        private async Task CreateAndStartGame(ButtonIdentifier button)
         {
             this.CleanRunningGame();
 
@@ -103,7 +101,7 @@
                 this.game = gameFactory();
             }
 
-            return Task.CompletedTask;
+            await this.StartGame();
         }
 
         private async Task WakeUp()
@@ -133,7 +131,7 @@
         {
             this.CleanRunningGame();
 
-            await this.stateMachine.Fire(GameChooserEvent.Idle);
+            await this.stateMachine.FireAsync(GameChooserEvent.Idle);
         }
 
         private async void GameChosen(ButtonIdentifier buttonPressed)
@@ -143,38 +141,26 @@
             this.temporarySubscription.Dispose();
 
             await this.GameBox.SetAll(false);
-            await this.stateMachine.Fire(GameChooserEvent.ButtonPressed, buttonPressed);
+            await this.stateMachine.FireAsync(this.buttonPressedWithParameter, buttonPressed);
         }
 
-        private AsyncPassiveStateMachine<GameChooserState, GameChooserEvent> ConfigureStateMachine()
+        private StateMachine<GameChooserState, GameChooserEvent> ConfigureStateMachine()
         {
-            var fsm = new AsyncPassiveStateMachine<GameChooserState, GameChooserEvent>();
-            fsm.In(GameChooserState.StandBy)
-                .On(GameChooserEvent.ButtonPressed)
-                .Goto(GameChooserState.Awake)
-                .Execute(this.WakeUp)
-                .On(GameChooserEvent.GameFinished)
-                .Goto(GameChooserState.StandBy);
+            var fsm = new StateMachine<GameChooserState, GameChooserEvent>(GameChooserState.StandBy);
+            fsm.Configure(GameChooserState.StandBy)
+                .Permit(GameChooserEvent.ButtonPressed, GameChooserState.Awake);
 
-            fsm.In(GameChooserState.Awake)
-                .On(GameChooserEvent.ButtonPressed)
-                .Goto(GameChooserState.Game)
-                .Execute<ButtonIdentifier>(this.CreateGame)
-                .On(GameChooserEvent.Idle)
-                .Goto(GameChooserState.StandBy)
-                .Execute(this.Sleep);
+            fsm.Configure(GameChooserState.Awake)
+                .OnEntryAsync(this.WakeUp)
+                .Permit(GameChooserEvent.ButtonPressed, GameChooserState.Game)
+                .Permit(GameChooserEvent.Idle, GameChooserState.StandBy);
 
-            fsm.In(GameChooserState.Game)
-                .ExecuteOnEntry(this.StartGame)
-                .On(GameChooserEvent.Reset)
-                .Goto(GameChooserState.Awake)
-                .Execute(this.WakeUp)
-                .On(GameChooserEvent.GameFinished)
-                .Goto(GameChooserState.Awake)
-                .Execute(this.WakeUp)
-                .On(GameChooserEvent.Idle)
-                .Goto(GameChooserState.StandBy)
-                .Execute(this.Sleep);
+            this.buttonPressedWithParameter = fsm.SetTriggerParameters<ButtonIdentifier>(GameChooserEvent.ButtonPressed);
+            fsm.Configure(GameChooserState.Game)
+                .OnEntryFromAsync(buttonPressedWithParameter, this.CreateAndStartGame)
+                .Permit(GameChooserEvent.Reset, GameChooserState.Awake)
+                .Permit(GameChooserEvent.GameFinished, GameChooserState.Awake)
+                .Permit(GameChooserEvent.Idle, GameChooserState.StandBy);
 
             return fsm;
         }
@@ -187,25 +173,17 @@
                 {
                     await this.game.Start(this.maximumGameTime);
                 }
-                catch (StateMachineException ex)
+                catch (Exception)
                 {
-                    if (ex.InnerException is OperationCanceledException)
-                    {
-                        // timeout
-                        await this.stateMachine.Fire(GameChooserEvent.Idle);
-                        return;
-                    }
-                }
-                catch (TaskCanceledException)
-                {
+                    await this.stateMachine.FireAsync(GameChooserEvent.Idle);
                 }
 
                 this.CleanRunningGame();
-                await this.stateMachine.Fire(GameChooserEvent.GameFinished);
+                await this.stateMachine.FireAsync(GameChooserEvent.GameFinished);
             }
             else
             {
-                await this.stateMachine.Fire(GameChooserEvent.Reset);
+                await this.stateMachine.FireAsync(GameChooserEvent.Reset);
             }
         }
     }

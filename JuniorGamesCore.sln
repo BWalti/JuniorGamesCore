@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuniorGames", "JuniorGamesC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimulatorBox", "SimulatorBox\SimulatorBox.csproj", "{DA137FAD-BBFC-45DA-8481-8F75D4BA9608}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuniorGames.Core", "JuniorGames.Core\JuniorGames.Core.csproj", "{6C954CE8-36FF-4BFC-899D-4CFFBB16F398}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuniorGames.Core", "JuniorGames.Core\JuniorGames.Core.csproj", "{6C954CE8-36FF-4BFC-899D-4CFFBB16F398}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
