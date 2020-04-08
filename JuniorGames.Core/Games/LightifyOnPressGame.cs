@@ -27,7 +27,7 @@
             }
         }
 
-        protected override async Task Start()
+        protected override async Task OnStart()
         {
             this.subscription = this.GameBox.LightButtonOnPress();
 

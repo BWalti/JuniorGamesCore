@@ -14,7 +14,7 @@
         {
         }
 
-        protected override async Task Start()
+        protected override async Task OnStart()
         {
             var light = this.GameBox.LedButtonPinPins.First(l =>
                 l.ButtonIdentifier.Equals(GameBoxBase.GreenOneButtonIdentifier));

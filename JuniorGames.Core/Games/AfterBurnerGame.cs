@@ -31,7 +31,7 @@
             }
         }
 
-        protected override async Task Start()
+        protected override async Task OnStart()
         {
             var turnOnSubscription = this.GameBox.OnButtonDown.Subscribe(this.LightUp);
             var turnOffSubscription = this.GameBox

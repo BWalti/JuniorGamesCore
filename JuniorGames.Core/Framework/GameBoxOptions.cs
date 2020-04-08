@@ -1,7 +1,9 @@
 ﻿namespace JuniorGames.Core.Framework
 {
+    using System;
+
     public class GameBoxOptions : IOptions
     {
-        public int IdleTimeout { get; set; }
+        public TimeSpan IdleTimeout { get; set; }
     }
 }

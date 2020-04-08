@@ -30,7 +30,7 @@ namespace JuniorGames.Core.Games
         public Task Start(TimeSpan maximumGameTime)
         {
             this.cancellationTokenSource = new CancellationTokenSource(maximumGameTime);
-            return this.Start();
+            return this.OnStart();
         }
 
         public virtual void Stop()
@@ -38,7 +38,7 @@ namespace JuniorGames.Core.Games
             this.cancellationTokenSource.Cancel();
         }
 
-        protected abstract Task Start();
+        protected abstract Task OnStart();
 
         protected virtual void Dispose(bool disposing)
         {

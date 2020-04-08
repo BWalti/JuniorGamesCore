@@ -12,7 +12,7 @@
         private readonly Dictionary<ButtonIdentifier, ILightableButton> lookup;
 
         public GameBoxSimulator(GameBoxOptions options)
-        : base(options)
+            : base(options)
         {
             var models = new[]
             {
@@ -20,15 +20,18 @@
                 new LightyButtonModel(RedOneButtonIdentifier), new LightyButtonModel(BlueOneButtonIdentifier),
                 new LightyButtonModel(WhiteOneButtonIdentifier), new LightyButtonModel(WhiteTwoButtonIdentifier),
                 new LightyButtonModel(BlueTwoButtonIdentifier), new LightyButtonModel(RedTwoButtonIdentifier),
-                new LightyButtonModel(YellowTwoButtonIdentifier), new LightyButtonModel(GreenTwoButtonIdentifier),
+                new LightyButtonModel(YellowTwoButtonIdentifier), new LightyButtonModel(GreenTwoButtonIdentifier)
             };
 
             this.LedButtonPinPins = models.ToList();
 
             this.lookup = this.LedButtonPinPins.ToDictionary(lbpp => lbpp.ButtonIdentifier, lbpp => lbpp);
 
-            this.IdleTimer = this.LedButtonPinPins.Select(lbpp => lbpp.Button).Merge().Select(s => false)
-            .Throttle(TimeSpan.FromSeconds(this.Options.IdleTimeout));
+            this.IdleTimer = this.LedButtonPinPins
+                .Select(lbpp => lbpp.Button)
+                .Merge()
+                .Select(s => false)
+                .Throttle(this.Options.IdleTimeout);
 
             this.OnButtonDown = this.LedButtonPinPins.Select(lbpp => lbpp.ButtonDown).Merge();
 
@@ -40,7 +43,7 @@
         }
 
         public override IObservable<ButtonPressedEventArgs> OnButton { get; }
-        
+
         public override IObservable<IEnumerable<ButtonPressedEventArgs>> Reset { get; }
 
         public override IObservable<ButtonIdentifier> OnButtonUp { get; }
@@ -62,7 +65,10 @@
 
         public override async Task Blink(IEnumerable<ButtonIdentifier> buttons, int times = 1, int duration = 200)
         {
-            if (times < 1) return;
+            if (times < 1)
+            {
+                return;
+            }
 
             var lightableButtons = this.GetLightableButtonsForIdentifiers(buttons);
 
@@ -70,26 +76,36 @@
             {
                 await Task.WhenAll(lightableButtons.Select(b => b.SetLight(true, duration)));
 
-                if (i != times - 1) await Task.Delay(duration);
+                if (i != times - 1)
+                {
+                    await Task.Delay(duration);
+                }
             }
         }
 
         public override async Task BlinkAll(int times = 1, int duration = 200)
         {
-            if (times < 1) return;
+            if (times < 1)
+            {
+                return;
+            }
 
             for (var i = 0; i < times; i++)
             {
                 await this.SetAll(true, duration);
 
-                if (i != times - 1) await Task.Delay(duration);
+                if (i != times - 1)
+                {
+                    await Task.Delay(duration);
+                }
             }
         }
 
         public override IDisposable LightButtonOnPress()
         {
             var subscriptions = this.LedButtonPinPins
-            .Select(lbpp => lbpp.Button.Subscribe(args => this.LightifyOnPress(lbpp, args))).ToArray();
+                .Select(lbpp => lbpp.Button.Subscribe(args => this.LightifyOnPress(lbpp, args)))
+                .ToArray();
 
             return new CollectionDisposableWithFinalAction(async () => await this.SetAll(false), subscriptions);
         }

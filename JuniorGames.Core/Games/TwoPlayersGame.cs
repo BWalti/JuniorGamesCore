@@ -32,7 +32,7 @@
             this.options = options;
         }
 
-        protected override async Task Start()
+        protected override async Task OnStart()
         {
             this.Init();
             this.InitializeChain();

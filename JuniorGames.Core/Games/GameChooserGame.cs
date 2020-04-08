@@ -15,17 +15,18 @@
     public class GameChooserGame : GameBase
     {
         private readonly GameBootstrapper gameBootstrapper;
-        private readonly IDisposable idleSubscription;
         private readonly TimeSpan idleTimeout;
+        private readonly object lockObj = new object();
         private readonly TimeSpan maximumGameTime;
         private readonly Dictionary<ButtonIdentifier, Func<IGame>> registeredGames;
         private readonly StateMachine<GameChooserState, GameChooserEvent> stateMachine;
 
-        private readonly TaskCompletionSource<object> taskCompletionSource;
+        private StateMachine<GameChooserState, GameChooserEvent>.TriggerWithParameters<ButtonIdentifier>
+            buttonPressedWithParameter;
+
         private IGame game;
-        private IDisposable temporarySubscription;
-        private readonly object lockObj = new object();
-        private StateMachine<GameChooserState, GameChooserEvent>.TriggerWithParameters<ButtonIdentifier> buttonPressedWithParameter;
+        private IDisposable resetSubscription;
+        private IDisposable wakeupOrIdleSubscription;
 
         public GameChooserGame(GameBootstrapper gameBootstrapper, IGameBox gameBox, GameChooserOptions options) :
             base(gameBox)
@@ -33,29 +34,34 @@
             this.stateMachine = this.ConfigureStateMachine();
             this.gameBootstrapper = gameBootstrapper;
 
-            this.taskCompletionSource = new TaskCompletionSource<object>();
             this.maximumGameTime = TimeSpan.FromMinutes(options.MaximumGameTimeMinutes);
-            this.idleTimeout = TimeSpan.FromSeconds(this.GameBox.Options.IdleTimeout);
+            this.idleTimeout = this.GameBox.Options.IdleTimeout;
 
-            this.idleSubscription = this.GameBox.Reset
+            this.resetSubscription = this.GameBox.Reset
                 .Select(buttons => true)
                 .Merge(this.GameBox.IdleTimer)
-                .Subscribe(next => this.SetIdle(null));
+                .Subscribe(next => this.FireReset());
 
             this.registeredGames = new Dictionary<ButtonIdentifier, Func<IGame>>
             {
                 {GameBoxBase.GreenOneButtonIdentifier, () => this.gameBootstrapper.AfterButner()},
                 {GameBoxBase.YellowOneButtonIdentifier, () => this.gameBootstrapper.LightifyOnButtonPress()},
-                {GameBoxBase.RedOneButtonIdentifier, () => this.gameBootstrapper.ChainGame(5)},
+                {GameBoxBase.RedOneButtonIdentifier, () => this.gameBootstrapper.ChainGame(5)}
+
                 //{GameBoxBase.BlueOneButtonIdentifier, () => this.gameBootstrapper.HueGame()}
             };
         }
 
-        protected override async Task Start()
+        private async void FireReset()
         {
-            await this.stateMachine.FireAsync(GameChooserEvent.ButtonPressed);
+            Log.Information("Firing reset");
+            await this.stateMachine.FireAsync(GameChooserEvent.Reset);
+        }
 
-            await this.taskCompletionSource.Task;
+        protected override async Task OnStart()
+        {
+            Log.Information("Firing any ButtonPressed");
+            await this.stateMachine.FireAsync(GameChooserEvent.ButtonPressed);
         }
 
         private async Task Sleep()
@@ -64,10 +70,10 @@
 
             await this.GameBox.SetAll(false);
 
-            this.temporarySubscription = this.GameBox.LedButtonPinPins
+            this.wakeupOrIdleSubscription = this.GameBox.LedButtonPinPins
                 .Select(lbpp => lbpp.Button)
                 .Merge()
-                .Subscribe(this.WakeUpButtonPressed);
+                .Subscribe(this.FireButtonPressed);
         }
 
         private void CleanRunningGame()
@@ -76,6 +82,7 @@
             {
                 if (this.game != null)
                 {
+                    Log.Information("Cleaning game...");
                     this.game.Stop();
                     this.game.Dispose();
 
@@ -84,11 +91,10 @@
             }
         }
 
-        private async void WakeUpButtonPressed(ButtonPressedEventArgs args)
+        private async void FireButtonPressed(ButtonPressedEventArgs args)
         {
-            this.CleanRunningGame();
-
-            this.temporarySubscription.Dispose();
+            this.wakeupOrIdleSubscription.Dispose();
+            Log.Information($"Firing button {args.Identifier} pressed");
             await this.stateMachine.FireAsync(GameChooserEvent.ButtonPressed);
         }
 
@@ -98,6 +104,7 @@
 
             if (this.registeredGames.TryGetValue(button, out var gameFactory))
             {
+                Log.Information("Creating game...");
                 this.game = gameFactory();
             }
 
@@ -106,6 +113,7 @@
 
         private async Task WakeUp()
         {
+            Log.Information("Waking up...");
             this.CleanRunningGame();
 
             Log.Information("WakeUp called");
@@ -122,25 +130,25 @@
             await Task.WhenAll(allTasks);
 
             Log.Information("Awaiting next button");
-            this.temporarySubscription = this.GameBox
+            this.wakeupOrIdleSubscription = this.GameBox
                 .WaitForNextButton(this.idleTimeout)
-                .Subscribe(this.GameChosen, this.SetIdle);
+                .Subscribe(this.ChooseGame, this.FireIdle);
         }
 
-        private async void SetIdle(Exception obj)
+        private async void FireIdle(Exception obj)
         {
-            this.CleanRunningGame();
-
+            Log.Information("Firing Idle");
             await this.stateMachine.FireAsync(GameChooserEvent.Idle);
         }
 
-        private async void GameChosen(ButtonIdentifier buttonPressed)
+        private async void ChooseGame(ButtonIdentifier buttonPressed)
         {
             Log.Information($"Game chosen: {buttonPressed.Player} / {buttonPressed.Color}");
 
-            this.temporarySubscription.Dispose();
+            this.wakeupOrIdleSubscription.Dispose();
 
             await this.GameBox.SetAll(false);
+            Log.Information("Firing button pressed");
             await this.stateMachine.FireAsync(this.buttonPressedWithParameter, buttonPressed);
         }
 
@@ -148,21 +156,36 @@
         {
             var fsm = new StateMachine<GameChooserState, GameChooserEvent>(GameChooserState.StandBy);
             fsm.Configure(GameChooserState.StandBy)
-                .Permit(GameChooserEvent.ButtonPressed, GameChooserState.Awake);
-
+                .OnEntryAsync(this.Sleep)
+                .Permit(GameChooserEvent.ButtonPressed, GameChooserState.Awake)
+                .PermitReentry(GameChooserEvent.Reset);
+                
             fsm.Configure(GameChooserState.Awake)
                 .OnEntryAsync(this.WakeUp)
                 .Permit(GameChooserEvent.ButtonPressed, GameChooserState.Game)
-                .Permit(GameChooserEvent.Idle, GameChooserState.StandBy);
+                .Permit(GameChooserEvent.Idle, GameChooserState.StandBy)
+                .PermitReentry(GameChooserEvent.Reset);
 
-            this.buttonPressedWithParameter = fsm.SetTriggerParameters<ButtonIdentifier>(GameChooserEvent.ButtonPressed);
+            this.buttonPressedWithParameter =
+                fsm.SetTriggerParameters<ButtonIdentifier>(GameChooserEvent.ButtonPressed);
             fsm.Configure(GameChooserState.Game)
-                .OnEntryFromAsync(buttonPressedWithParameter, this.CreateAndStartGame)
+                .OnEntryFromAsync(this.buttonPressedWithParameter, this.CreateAndStartGame)
                 .Permit(GameChooserEvent.Reset, GameChooserState.Awake)
                 .Permit(GameChooserEvent.GameFinished, GameChooserState.Awake)
-                .Permit(GameChooserEvent.Idle, GameChooserState.StandBy);
+                .Permit(GameChooserEvent.Idle, GameChooserState.StandBy)
+                .Permit(GameChooserEvent.Reset, GameChooserState.Awake);
 
             return fsm;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            Log.Information("Disposing...");
+            this.CleanRunningGame();
+
+            base.Dispose(disposing);
+            this.stateMachine.Deactivate();
+            this.resetSubscription.Dispose();
         }
 
         private async Task StartGame()
@@ -171,18 +194,21 @@
             {
                 try
                 {
+                    Log.Information("Starting game...");
                     await this.game.Start(this.maximumGameTime);
+
+                    Log.Information("Game finished...");
+                    await this.stateMachine.FireAsync(GameChooserEvent.GameFinished);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    Log.Information($"Exception from game: {e.Message}");
                     await this.stateMachine.FireAsync(GameChooserEvent.Idle);
                 }
-
-                this.CleanRunningGame();
-                await this.stateMachine.FireAsync(GameChooserEvent.GameFinished);
             }
             else
             {
+                Log.Information("Resetting...");
                 await this.stateMachine.FireAsync(GameChooserEvent.Reset);
             }
         }

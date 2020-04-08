@@ -56,7 +56,7 @@
                 .Select(lbpp => lbpp.Button)
                 .Merge()
                 .Select(s => false)
-                .Throttle(TimeSpan.FromSeconds(this.Options.IdleTimeout));
+                .Throttle(this.Options.IdleTimeout);
 
             this.OnButtonDown = this.LedButtonPinPins
                 .Select(lbpp => lbpp.ButtonDown)

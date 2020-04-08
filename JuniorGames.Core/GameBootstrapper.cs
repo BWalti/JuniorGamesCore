@@ -15,7 +15,7 @@
             this.Configure(containerConfigureAction);
 
             var gameBoxOptions = this.container.Resolve<GameBoxOptions>();
-            gameBoxOptions.IdleTimeout = 20;
+            gameBoxOptions.IdleTimeout = TimeSpan.FromSeconds(10);
         }
 
         public IGameBox GameBox => this.container.Resolve<IGameBox>();
