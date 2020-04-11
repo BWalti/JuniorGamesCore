@@ -12,6 +12,7 @@
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem cal:Message.Attach="Start" Header="_Start" />
+            <MenuItem cal:Message.Attach="Reset" Header="_Reset" />
         </Menu>
 
         <Grid>

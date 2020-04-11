@@ -38,13 +38,11 @@
             this.idleTimeout = this.GameBox.Options.IdleTimeout;
 
             this.resetSubscription = this.GameBox.Reset
-                .Select(buttons => true)
-                .Merge(this.GameBox.IdleTimer)
                 .Subscribe(next => this.FireReset());
 
             this.registeredGames = new Dictionary<ButtonIdentifier, Func<IGame>>
             {
-                {GameBoxBase.GreenOneButtonIdentifier, () => this.gameBootstrapper.AfterButner()},
+                {GameBoxBase.GreenOneButtonIdentifier, () => this.gameBootstrapper.AfterBurner()},
                 {GameBoxBase.YellowOneButtonIdentifier, () => this.gameBootstrapper.LightifyOnButtonPress()},
                 {GameBoxBase.RedOneButtonIdentifier, () => this.gameBootstrapper.ChainGame(5)}
 
@@ -66,6 +64,7 @@
 
         private async Task Sleep()
         {
+            Log.Information("Falling asleep...");
             this.CleanRunningGame();
 
             await this.GameBox.SetAll(false);

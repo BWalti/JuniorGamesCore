@@ -12,6 +12,7 @@ namespace JuniorGames.Core.Games
     {
         private CancellationTokenSource cancellationTokenSource;
         private bool disposed;
+        private TaskCompletionSource<bool> taskCompletionSource;
 
         protected GameBase(IGameBox box)
         {
@@ -27,10 +28,19 @@ namespace JuniorGames.Core.Games
             this.Dispose(true);
         }
 
-        public Task Start(TimeSpan maximumGameTime)
+        public async Task Start(TimeSpan maximumGameTime)
         {
             this.cancellationTokenSource = new CancellationTokenSource(maximumGameTime);
-            return this.OnStart();
+
+            this.taskCompletionSource = new TaskCompletionSource<bool>();
+
+            await this.OnStart();
+            await this.taskCompletionSource.Task;
+        }
+
+        protected void NotifyGameComplete(bool success = true)
+        {
+            this.taskCompletionSource.SetResult(success);
         }
 
         public virtual void Stop()

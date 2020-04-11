@@ -1,6 +1,7 @@
 namespace SimulatorBox
 {
     using System;
+    using System.Threading.Tasks;
     using System.Windows.Media;
 
     using Caliburn.Micro;
@@ -50,13 +51,20 @@ namespace SimulatorBox
         public LightyButtonViewModel WhiteTwo { get; }
 
 
-        public async void Start()
+        public async Task Start()
         {
             using (var chooser = this.bootstrapper.GameChooser())
             {
                 await chooser.Start(TimeSpan.FromMinutes(5));
             }
         }
+
+        public void Reset()
+        {
+            this.Simulator.DoReset();
+        }
+
+        public GameBoxSimulator Simulator => this.bootstrapper.GameBox as GameBoxSimulator;
 
         private static void SimulatorRegistrations(IWindsorContainer container)
         {

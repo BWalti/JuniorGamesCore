@@ -43,7 +43,7 @@
             return this.container.Resolve<LedDemoGame>();
         }
 
-        public IGame AfterButner()
+        public IGame AfterBurner()
         {
             return this.container.Resolve<AfterBurnerGame>();
         }

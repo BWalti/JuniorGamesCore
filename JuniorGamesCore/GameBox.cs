@@ -76,7 +76,8 @@
                 .Select(id => this.lookup[id].Button)
                 .CombineLatest()
                 .Throttle(TimeSpan.FromSeconds(1))
-                .Where(latest => latest.All(button => button.IsPressed));
+                .Where(latest => latest.All(button => button.IsPressed))
+                .Select(list => new ResetArgs());
 
             pressedCtrlAltDeleteButtons.Subscribe(list => { Log.Information("CtrlAltDelete happened!"); });
 
@@ -89,7 +90,7 @@
 
         public override IObservable<ButtonIdentifier> OnButtonDown { get; }
 
-        public override IObservable<IEnumerable<ButtonPressedEventArgs>> Reset { get; }
+        public override IObservable<ResetArgs> Reset { get; }
 
         public override IObservable<bool> IdleTimer { get; set; }
 

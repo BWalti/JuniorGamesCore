@@ -39,12 +39,13 @@
 
             this.OnButton = this.LedButtonPinPins.Select(lbpp => lbpp.Button).Merge();
 
-            this.Reset = Observable.Empty<IEnumerable<ButtonPressedEventArgs>>();
+            this.Reset = Observable.FromEvent<ResetArgs>(action => this.ResetEvent += action,
+                action => this.ResetEvent -= action);
         }
 
         public override IObservable<ButtonPressedEventArgs> OnButton { get; }
 
-        public override IObservable<IEnumerable<ButtonPressedEventArgs>> Reset { get; }
+        public override IObservable<ResetArgs> Reset { get; }
 
         public override IObservable<ButtonIdentifier> OnButtonUp { get; }
 
@@ -56,9 +57,14 @@
 
         public override ILightableButton this[ButtonIdentifier buttonIdentifier] => this.lookup[buttonIdentifier];
 
+        public event Action<ResetArgs> ResetEvent;
+
         public override IObservable<ButtonIdentifier> WaitForNextButton(TimeSpan timeout)
         {
-            var observable = this.LedButtonPinPins.Select(lbpp => lbpp.ButtonDown).Merge().Timeout(timeout);
+            var observable = this.LedButtonPinPins
+                .Select(lbpp => lbpp.ButtonDown)
+                .Merge()
+                .Timeout(timeout);
 
             return observable;
         }
@@ -81,6 +87,11 @@
                     await Task.Delay(duration);
                 }
             }
+        }
+
+        public void DoReset()
+        {
+            this.ResetEvent?.Invoke(new ResetArgs());
         }
 
         public override async Task BlinkAll(int times = 1, int duration = 200)

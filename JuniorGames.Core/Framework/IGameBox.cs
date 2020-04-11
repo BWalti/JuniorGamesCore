@@ -10,7 +10,7 @@
 
         IObservable<ButtonPressedEventArgs> OnButton { get; }
 
-        IObservable<IEnumerable<ButtonPressedEventArgs>> Reset { get; }
+        IObservable<ResetArgs> Reset { get; }
 
         IObservable<ButtonIdentifier> OnButtonUp { get; }
 
@@ -35,5 +35,9 @@
         Task Set(ButtonIdentifier button, bool enabled, int? milliseconds = null);
 
         Task Set(IEnumerable<ButtonIdentifier> buttons, bool enabled, int? milliseconds = null);
+    }
+
+    public class ResetArgs
+    {
     }
 }

@@ -28,6 +28,8 @@
             await Task.Delay(this.options.DarkMs);
 
             await this.GameBox.BlinkAll(2, this.options.LightMs);
+
+            this.NotifyGameComplete();
         }
     }
 }
