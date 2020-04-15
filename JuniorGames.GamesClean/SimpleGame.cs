@@ -13,12 +13,50 @@
     {
         public TimeSpan Pause { get; set; }
         public TimeSpan LightUp { get; set; }
-        
         public int Retries { get; set; }
     }
 
     public class SimpleGame
     {
+
+        public class SimpleGameStatus
+        {
+            public SimpleGameStatus(List<ILightableButton> chain)
+            {
+                this.Chain = chain;
+                this.FaultCounter = 0;
+                this.InputIndex = 0;
+            }
+
+            public int InputIndex { get; private set; }
+
+            public List<ILightableButton> Chain { get; }
+
+            public int FaultCounter { get; private set; }
+
+            public ButtonIdentifier ExpectedButton => this.Chain[this.InputIndex].ButtonIdentifier;
+
+            internal void IncreaseFaultCounter()
+            {
+                this.FaultCounter++;
+            }
+
+            internal void IncreaseInputIndex()
+            {
+                this.InputIndex++;
+            }
+
+            internal void ResetInputIndex()
+            {
+                this.InputIndex = 0;
+            }
+
+            public void ResetFaultCounter()
+            {
+                this.FaultCounter = 0;
+            }
+        }
+
         private SimpleGameOptions Options { get; }
         
         private readonly IBox box;
@@ -30,12 +68,11 @@
         private readonly Random random = new Random();
         private readonly StateMachine<SimpleGameState, SimpleGameEvent> stateMachine;
         private readonly TaskCompletionSource<object> taskCompletionSource;
+        
         private IDisposable buttonPressedSubscription;
-
-        private List<ILightableButton> chain;
-        private int faultCounter;
-        private int inputIndex;
         private IDisposable lightButtonOnPressSubscription;
+
+        public SimpleGameStatus Status { get; private set; }
 
         public SimpleGame(IBox box, SimpleGameOptions options)
         {
@@ -98,8 +135,8 @@
             await Task.Delay(this.Options.Pause);
             await this.box.BlinkAll(2);
 
-            this.faultCounter++;
-            if (this.faultCounter <= this.Options.Retries)
+            this.Status.IncreaseFaultCounter();
+            if (this.Status.FaultCounter < this.Options.Retries)
             {
                 await this.DoublePause();
                 await this.stateMachine.FireAsync(SimpleGameEvent.DisplayChain);
@@ -127,10 +164,10 @@
         {
             Log.Information("OnSuccess");
             this.DisposeButtonSubscriptions();
-            this.faultCounter = 0;
+            this.Status.ResetFaultCounter();
 
             var newButton = this.PickRandomButton();
-            this.chain.Add(newButton);
+            this.Status.Chain.Add(newButton);
 
             await Task.Delay(this.Options.Pause);
             await this.box.BlinkAll(1, this.Options.LightUp);
@@ -141,7 +178,7 @@
         private Task DoAwaitInput()
         {
             Log.Information("DoAwaitInput");
-            this.inputIndex = 0;
+            this.Status.ResetInputIndex();
             this.lightButtonOnPressSubscription = this.box.LightButtonOnPress();
             this.buttonPressedSubscription = this.box.OnButtonUp.Subscribe(async identifier =>
             {
@@ -154,13 +191,12 @@
         private async Task ButtonPressed(ButtonIdentifier arg)
         {
             Log.Information($"ButtonPressed: {arg}");
-            var shouldBe = this.chain[this.inputIndex];
 
-            if (shouldBe.ButtonIdentifier.Equals(arg))
+            if (this.Status.ExpectedButton.Equals(arg))
             {
                 // correct! :)
-                this.inputIndex++;
-                if (this.inputIndex >= this.chain.Count)
+                this.Status.IncreaseInputIndex();
+                if (this.Status.InputIndex >= this.Status.Chain.Count)
                 {
                     // finished!
                     await this.stateMachine.FireAsync(SimpleGameEvent.ChainCorrectlyRepeated);
@@ -177,7 +213,7 @@
         {
             Log.Information("DoDisplayChain");
 
-            foreach (var led in this.chain)
+            foreach (var led in this.Status.Chain)
             {
                 await led.SetLight(true, this.Options.LightUp);
                 await Task.Delay(this.Options.Pause);
@@ -190,10 +226,11 @@
         {
             Log.Information("Initialize Chain");
 
-            this.chain = Enumerable.Range(0, 3)
+            var chain = Enumerable.Range(0, 3)
                 .Select(_ => this.PickRandomButton())
                 .ToList();
 
+            this.Status = new SimpleGameStatus(chain);
             await this.stateMachine.FireAsync(SimpleGameEvent.DisplayChain);
         }
 
