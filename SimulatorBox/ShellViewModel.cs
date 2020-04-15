@@ -36,13 +36,13 @@ namespace SimulatorBox
             });
 
             this.GreenOne = new LightyButtonViewModel(Colors.Green, GetLightableButton(gameBox, BoxBase.GreenOneButtonIdentifier));
-            this.YellowOne = new LightyButtonViewModel(Colors.Yellow, GetLightableButton(gameBox, BoxBase.YellowOneButtonIdentifier));
+            this.YellowOne = new LightyButtonViewModel(Colors.Gold, GetLightableButton(gameBox, BoxBase.YellowOneButtonIdentifier));
             this.RedOne = new LightyButtonViewModel(Colors.Red, GetLightableButton(gameBox, BoxBase.RedOneButtonIdentifier));
             this.BlueOne = new LightyButtonViewModel(Colors.Blue, GetLightableButton(gameBox, BoxBase.BlueOneButtonIdentifier));
             this.WhiteOne = new LightyButtonViewModel(Colors.LightGray, GetLightableButton(gameBox, BoxBase.WhiteOneButtonIdentifier));
 
             this.GreenTwo = new LightyButtonViewModel(Colors.Green, GetLightableButton(gameBox, BoxBase.GreenTwoButtonIdentifier));
-            this.YellowTwo = new LightyButtonViewModel(Colors.Yellow, GetLightableButton(gameBox, BoxBase.YellowTwoButtonIdentifier));
+            this.YellowTwo = new LightyButtonViewModel(Colors.Gold, GetLightableButton(gameBox, BoxBase.YellowTwoButtonIdentifier));
             this.RedTwo = new LightyButtonViewModel(Colors.Red, GetLightableButton(gameBox, BoxBase.RedTwoButtonIdentifier));
             this.BlueTwo = new LightyButtonViewModel(Colors.Blue, GetLightableButton(gameBox, BoxBase.BlueTwoButtonIdentifier));
             this.WhiteTwo = new LightyButtonViewModel(Colors.LightGray, GetLightableButton(gameBox, BoxBase.WhiteTwoButtonIdentifier));

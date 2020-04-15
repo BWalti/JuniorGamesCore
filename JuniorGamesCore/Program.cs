@@ -31,6 +31,14 @@ namespace JuniorGames
                     IdleTimeout = TimeSpan.FromMinutes(5)
                 }));
 
+            container.Register(Component.For<SimpleGameOptions>()
+                .Instance(new SimpleGameOptions
+                {
+                    LightUp = TimeSpan.FromMilliseconds(400),
+                    Pause = TimeSpan.FromMilliseconds(200),
+                    Retries = 3
+                }));
+
             container.Register(Component.For<SimpleGame>());
 
             var game = container.Resolve<SimpleGame>();
