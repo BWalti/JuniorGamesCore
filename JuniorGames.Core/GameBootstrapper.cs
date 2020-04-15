@@ -1,10 +1,9 @@
-﻿namespace JuniorGames.Core
+﻿namespace JuniorGames.Games
 {
     using System;
     using Castle.MicroKernel.Registration;
     using Castle.Windsor;
-    using JuniorGames.Core.Framework;
-    using JuniorGames.Core.Games;
+    using GameBox.Framework;
 
     public class GameBootstrapper : IDisposable
     {
@@ -14,11 +13,11 @@
         {
             this.Configure(containerConfigureAction);
 
-            var gameBoxOptions = this.container.Resolve<GameBoxOptions>();
+            var gameBoxOptions = this.container.Resolve<BoxBaseOptions>();
             gameBoxOptions.IdleTimeout = TimeSpan.FromSeconds(10);
         }
 
-        public IGameBox GameBox => this.container.Resolve<IGameBox>();
+        public IBox Box => this.container.Resolve<IBox>();
         
         public IGame ChainGame(int games, int retries = 3)
         {
@@ -37,7 +36,7 @@
         public IGame LedDemo(int lightMs = 200, int darkMs = 100)
         {
             var options = this.container.Resolve<LedDemoOptions>();
-            options.LightMs = lightMs;
+            options.LightUp = TimeSpan.FromMilliseconds(lightMs);
             options.DarkMs = darkMs;
 
             return this.container.Resolve<LedDemoGame>();

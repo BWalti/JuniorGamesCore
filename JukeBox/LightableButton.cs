@@ -4,7 +4,7 @@ using ILightableButton = GameBox.Framework.ILightableButton;
 using LightableButtonConfig = GameBox.Framework.LightableButtonConfig;
 using Player = GameBox.Framework.Player;
 
-namespace JuniorGames
+namespace JukeBox
 {
     using System;
     using System.Device.Gpio;

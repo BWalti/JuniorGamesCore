@@ -7,7 +7,7 @@
     using System.Drawing;
     using System.Reactive.Linq;
     using System.Reactive.Subjects;
-    using JuniorGames.Core.Framework;
+    using GameBox.Framework;
 
     public class LightyButtonModel : PropertyChangedBase, ILightableButton
     {
@@ -20,7 +20,7 @@
         public LightyButtonModel(ButtonIdentifier identifier)
         {
             this.ButtonIdentifier = identifier;
-            this.buttonAction = new System.Reactive.Subjects.Subject<bool>();
+            this.buttonAction = new Subject<bool>();
 
             this.Button = this.buttonAction.Select(value => new ButtonPressedEventArgs(this.ButtonIdentifier, value));
             this.ButtonUp = this.buttonAction.Where(value => !value).Select(v => this.ButtonIdentifier);
@@ -76,7 +76,7 @@
 
         public IObservable<ButtonPressedEventArgs> Button { get; }
 
-        public async Task SetLight(bool enabled, int? milliseconds = null)
+        public async Task SetLight(bool enabled, TimeSpan? milliseconds = null)
         {
             var oldValue = this.IsLighted;
 

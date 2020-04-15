@@ -1,4 +1,4 @@
-﻿namespace JuniorGames.Core
+﻿namespace JuniorGames.Games
 {
     using System;
     using System.Threading.Tasks;

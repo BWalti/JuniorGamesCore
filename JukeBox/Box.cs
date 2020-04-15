@@ -1,13 +1,11 @@
-﻿using BoxBase = GameBox.Framework.BoxBase;
-using BoxBaseOptions = GameBox.Framework.BoxBaseOptions;
-using ButtonIdentifier = GameBox.Framework.ButtonIdentifier;
+﻿using ButtonIdentifier = GameBox.Framework.ButtonIdentifier;
 using ButtonPressedEventArgs = GameBox.Framework.ButtonPressedEventArgs;
 using CollectionDisposableWithFinalAction = GameBox.Framework.CollectionDisposableWithFinalAction;
 using ILightableButton = GameBox.Framework.ILightableButton;
 using LightableButtonConfig = GameBox.Framework.LightableButtonConfig;
 using ResetArgs = GameBox.Framework.ResetArgs;
 
-namespace JuniorGames
+namespace JukeBox
 {
     using System;
     using System.Collections.Generic;
@@ -15,13 +13,14 @@ namespace JuniorGames
     using System.Linq;
     using System.Reactive.Linq;
     using System.Threading.Tasks;
+    using GameBox.Framework;
     using Serilog;
 
-    public sealed class GameBox : BoxBase
+    public sealed class Box : BoxBase
     {
         private readonly IDictionary<ButtonIdentifier, ILightableButton> lookup;
 
-        public GameBox(BoxBaseOptions options, GpioController gpioController) : base(options)
+        public Box(BoxBaseOptions options, GpioController gpioController) : base(options)
         {
             Log.Verbose("Constructing LED Button configs...");
             var lightableButtons = new[]
@@ -132,7 +131,7 @@ namespace JuniorGames
                 duration = TimeSpan.FromMilliseconds(200);
             }
 
-            var lightableButtons = this.GetLightableButtonsForIdentifiers(buttons);
+                var lightableButtons = this.GetLightableButtonsForIdentifiers(buttons);
 
             for (var i = 0; i < times; i++)
             {
@@ -152,7 +151,7 @@ namespace JuniorGames
                 return;
             }
 
-            if (!duration.HasValue)
+            if (duration == null)
             {
                 duration = TimeSpan.FromMilliseconds(200);
             }

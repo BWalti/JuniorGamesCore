@@ -231,7 +231,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="GameBoxBootstrapper.cs" />
-    <Compile Include="GameBoxSimulator.cs" />
+    <Compile Include="BoxSimulator.cs" />
     <Page Include="LightyButtonView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -269,9 +269,17 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\JuniorGames.Core\JuniorGames.Core.csproj">
+    <ProjectReference Include="..\GameBox.Framework\GameBox.Framework.csproj">
+      <Project>{8e7201b8-b71a-4fb7-a67a-262a4d19cfbb}</Project>
+      <Name>GameBox.Framework</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\JuniorGames.Core\JuniorGames.Games.csproj">
       <Project>{6c954ce8-36ff-4bfc-899d-4cffbb16f398}</Project>
-      <Name>JuniorGames.Core</Name>
+      <Name>JuniorGames.Games</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\JuniorGames.GamesClean\JuniorGames.GamesClean.csproj">
+      <Project>{71a0fd87-6c72-4025-94d7-cd8c064b5d5b}</Project>
+      <Name>JuniorGames.GamesClean</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

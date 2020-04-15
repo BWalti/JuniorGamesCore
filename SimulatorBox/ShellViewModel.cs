@@ -8,34 +8,49 @@ namespace SimulatorBox
 
     using Castle.MicroKernel.Registration;
     using Castle.Windsor;
-    using JuniorGames.Core;
-    using JuniorGames.Core.Framework;
+    using GameBox.Framework;
+    using JuniorGames.GamesClean;
 
     public class ShellViewModel : Screen
     {
-        private readonly GameBootstrapper bootstrapper;
+        private SimpleGame game;
+
+        //private readonly GameBootstrapper bootstrapper;
 
         public ShellViewModel()
         {
-            this.bootstrapper = new GameBootstrapper(SimulatorRegistrations);
-            var gameBox = this.bootstrapper.GameBox;
+            //this.bootstrapper = new GameBootstrapper(SimulatorRegistrations);
+            //var gameBox = this.bootstrapper.Box;
 
-            this.GreenOne = new LightyButtonViewModel(Colors.Green, GetLightableButton(gameBox, GameBoxBase.GreenOneButtonIdentifier));
-            this.YellowOne = new LightyButtonViewModel(Colors.Yellow, GetLightableButton(gameBox, GameBoxBase.YellowOneButtonIdentifier));
-            this.RedOne = new LightyButtonViewModel(Colors.Red, GetLightableButton(gameBox, GameBoxBase.RedOneButtonIdentifier));
-            this.BlueOne = new LightyButtonViewModel(Colors.Blue, GetLightableButton(gameBox, GameBoxBase.BlueOneButtonIdentifier));
-            this.WhiteOne = new LightyButtonViewModel(Colors.LightGray, GetLightableButton(gameBox, GameBoxBase.WhiteOneButtonIdentifier));
+            var boxBaseOptions = new BoxBaseOptions
+            {
+                IdleTimeout = TimeSpan.FromMinutes(3)
+            };
+            var gameBox = new BoxSimulator(boxBaseOptions);
 
-            this.GreenTwo = new LightyButtonViewModel(Colors.Green, GetLightableButton(gameBox, GameBoxBase.GreenTwoButtonIdentifier));
-            this.YellowTwo = new LightyButtonViewModel(Colors.Yellow, GetLightableButton(gameBox, GameBoxBase.YellowTwoButtonIdentifier));
-            this.RedTwo = new LightyButtonViewModel(Colors.Red, GetLightableButton(gameBox, GameBoxBase.RedTwoButtonIdentifier));
-            this.BlueTwo = new LightyButtonViewModel(Colors.Blue, GetLightableButton(gameBox, GameBoxBase.BlueTwoButtonIdentifier));
-            this.WhiteTwo = new LightyButtonViewModel(Colors.LightGray, GetLightableButton(gameBox, GameBoxBase.WhiteTwoButtonIdentifier));
+            this.game = new SimpleGame(gameBox, new SimpleGameOptions
+            {
+                LightUp = TimeSpan.FromMilliseconds(400),
+                Pause = TimeSpan.FromMilliseconds(200),
+                Retries = 3
+            });
+
+            this.GreenOne = new LightyButtonViewModel(Colors.Green, GetLightableButton(gameBox, BoxBase.GreenOneButtonIdentifier));
+            this.YellowOne = new LightyButtonViewModel(Colors.Yellow, GetLightableButton(gameBox, BoxBase.YellowOneButtonIdentifier));
+            this.RedOne = new LightyButtonViewModel(Colors.Red, GetLightableButton(gameBox, BoxBase.RedOneButtonIdentifier));
+            this.BlueOne = new LightyButtonViewModel(Colors.Blue, GetLightableButton(gameBox, BoxBase.BlueOneButtonIdentifier));
+            this.WhiteOne = new LightyButtonViewModel(Colors.LightGray, GetLightableButton(gameBox, BoxBase.WhiteOneButtonIdentifier));
+
+            this.GreenTwo = new LightyButtonViewModel(Colors.Green, GetLightableButton(gameBox, BoxBase.GreenTwoButtonIdentifier));
+            this.YellowTwo = new LightyButtonViewModel(Colors.Yellow, GetLightableButton(gameBox, BoxBase.YellowTwoButtonIdentifier));
+            this.RedTwo = new LightyButtonViewModel(Colors.Red, GetLightableButton(gameBox, BoxBase.RedTwoButtonIdentifier));
+            this.BlueTwo = new LightyButtonViewModel(Colors.Blue, GetLightableButton(gameBox, BoxBase.BlueTwoButtonIdentifier));
+            this.WhiteTwo = new LightyButtonViewModel(Colors.LightGray, GetLightableButton(gameBox, BoxBase.WhiteTwoButtonIdentifier));
         }
 
-        private static LightyButtonModel GetLightableButton(IGameBox gameBox, ButtonIdentifier buttonIdentifier)
+        private static LightyButtonModel GetLightableButton(IBox box, ButtonIdentifier buttonIdentifier)
         {
-            return gameBox[buttonIdentifier] as LightyButtonModel;
+            return box[buttonIdentifier] as LightyButtonModel;
         }
 
         public LightyButtonViewModel GreenOne { get; }
@@ -53,22 +68,24 @@ namespace SimulatorBox
 
         public async Task Start()
         {
-            using (var chooser = this.bootstrapper.GameChooser())
-            {
-                await chooser.Start(TimeSpan.FromMinutes(5));
-            }
+            await this.game.Start();
+
+            //using (var chooser = this.bootstrapper.GameChooser())
+            //{
+            //    await chooser.Start(TimeSpan.FromMinutes(5));
+            //}
         }
 
         public void Reset()
         {
-            this.Simulator.DoReset();
+            //this.Simulator.DoReset();
         }
 
-        public GameBoxSimulator Simulator => this.bootstrapper.GameBox as GameBoxSimulator;
+        //public BoxSimulator Simulator => this.bootstrapper.Box as BoxSimulator;
 
         private static void SimulatorRegistrations(IWindsorContainer container)
         {
-            container.Register(Component.For<IGameBox>().ImplementedBy<GameBoxSimulator>().LifestyleSingleton());
+            container.Register(Component.For<IBox>().ImplementedBy<BoxSimulator>().LifestyleSingleton());
         }
     }
 }

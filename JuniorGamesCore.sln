@@ -7,7 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuniorGames", "JuniorGamesC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimulatorBox", "SimulatorBox\SimulatorBox.csproj", "{DA137FAD-BBFC-45DA-8481-8F75D4BA9608}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuniorGames.Core", "JuniorGames.Core\JuniorGames.Core.csproj", "{6C954CE8-36FF-4BFC-899D-4CFFBB16F398}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuniorGames.Games", "JuniorGames.Core\JuniorGames.Games.csproj", "{6C954CE8-36FF-4BFC-899D-4CFFBB16F398}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JukeBox", "JukeBox\JukeBox.csproj", "{3EA8CD82-3DFD-4CC4-965D-0D1D63BE9D1B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameBox.Framework", "GameBox.Framework\GameBox.Framework.csproj", "{8E7201B8-B71A-4FB7-A67A-262A4D19CFBB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuniorGames.GamesClean", "JuniorGames.GamesClean\JuniorGames.GamesClean.csproj", "{71A0FD87-6C72-4025-94D7-CD8C064B5D5B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +33,18 @@ Global
 		{6C954CE8-36FF-4BFC-899D-4CFFBB16F398}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C954CE8-36FF-4BFC-899D-4CFFBB16F398}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C954CE8-36FF-4BFC-899D-4CFFBB16F398}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EA8CD82-3DFD-4CC4-965D-0D1D63BE9D1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EA8CD82-3DFD-4CC4-965D-0D1D63BE9D1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EA8CD82-3DFD-4CC4-965D-0D1D63BE9D1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EA8CD82-3DFD-4CC4-965D-0D1D63BE9D1B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E7201B8-B71A-4FB7-A67A-262A4D19CFBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E7201B8-B71A-4FB7-A67A-262A4D19CFBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E7201B8-B71A-4FB7-A67A-262A4D19CFBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E7201B8-B71A-4FB7-A67A-262A4D19CFBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71A0FD87-6C72-4025-94D7-CD8C064B5D5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71A0FD87-6C72-4025-94D7-CD8C064B5D5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71A0FD87-6C72-4025-94D7-CD8C064B5D5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71A0FD87-6C72-4025-94D7-CD8C064B5D5B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
