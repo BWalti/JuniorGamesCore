@@ -1,4 +1,5 @@
 ﻿using BoxBaseOptions = GameBox.Framework.BoxBaseOptions;
+using ButtonIdentifier = GameBox.Framework.ButtonIdentifier;
 using IBox = GameBox.Framework.IBox;
 
 namespace JuniorGames
@@ -9,16 +10,24 @@ namespace JuniorGames
     using Castle.MicroKernel.Registration;
     using Castle.Windsor;
     using JuniorGames.GamesClean;
+    using Microsoft.Extensions.Configuration;
     using Serilog;
+    using Serilog.Core;
+    using Serilog.Formatting.Elasticsearch;
+    using Serilog.Sinks.Elasticsearch;
     using Serilog.Sinks.SystemConsole.Themes;
 
     internal class Program
     {
         private static async Task Main(string[] args)
         {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .Build();
+
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                .MinimumLevel.Information()
+                .Destructure.ByTransforming<ButtonIdentifier>(bi => new { Player = bi.Player, Color = bi.Color.Name })
+                .ReadFrom.Configuration(configuration)
                 .CreateLogger();
 
             Log.Verbose("Serilog configured...");

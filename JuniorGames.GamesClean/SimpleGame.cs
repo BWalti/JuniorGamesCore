@@ -9,16 +9,8 @@
     using Serilog;
     using Stateless;
 
-    public class SimpleGameOptions
-    {
-        public TimeSpan Pause { get; set; }
-        public TimeSpan LightUp { get; set; }
-        public int Retries { get; set; }
-    }
-
     public class SimpleGame
     {
-
         public class SimpleGameStatus
         {
             public SimpleGameStatus(List<ILightableButton> chain)
@@ -188,11 +180,11 @@
             return Task.CompletedTask;
         }
 
-        private async Task ButtonPressed(ButtonIdentifier arg)
+        private async Task ButtonPressed(ButtonIdentifier identifier)
         {
-            Log.Information($"ButtonPressed: {arg}");
+            Log.Information("ButtonPressed: {@Identifier}", identifier);
 
-            if (this.Status.ExpectedButton.Equals(arg))
+            if (this.Status.ExpectedButton.Equals(identifier))
             {
                 // correct! :)
                 this.Status.IncreaseInputIndex();
@@ -211,7 +203,9 @@
 
         private async Task DoDisplayChain()
         {
-            Log.Information("DoDisplayChain");
+            var chainButtons = this.Status.Chain.Select(b => b.ButtonIdentifier);
+            Log.Information("DoDisplayChain: {@Chain}", chainButtons);
+
 
             foreach (var led in this.Status.Chain)
             {

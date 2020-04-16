@@ -6,17 +6,24 @@ namespace SimulatorBox
     using System.Windows;
 
     using Caliburn.Micro;
+    using GameBox.Framework;
+    using Microsoft.Extensions.Configuration;
     using Serilog;
-    using Serilog.Sinks.SystemConsole.Themes;
 
     public class GameBoxBootstrapper : BootstrapperBase
     {
         public GameBoxBootstrapper()
         {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .Build();
+
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                .MinimumLevel.Information()
+                .Destructure.ByTransforming<ButtonIdentifier>(bi => new { Player = bi.Player, Color = bi.Color.Name })
+                .ReadFrom.Configuration(configuration)
                 .CreateLogger();
+
+            Serilog.Debugging.SelfLog.Enable(Console.Error);
 
             ConventionManager.AddElementConvention<UIElement>(UIElement.VisibilityProperty,
                                                               "Visibility",
