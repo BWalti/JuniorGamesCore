@@ -15,7 +15,7 @@ namespace JuniorGames
 
     public class LightableButton : ILightableButton
     {
-        private static readonly TimeSpan DebounceTimeSpan = TimeSpan.FromMilliseconds(10);
+        private static readonly TimeSpan DebounceTimeSpan = TimeSpan.FromMilliseconds(50);
         private readonly GpioController gpioController;
         private bool isDisposed;
 
