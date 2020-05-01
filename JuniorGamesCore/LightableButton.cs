@@ -15,14 +15,16 @@ namespace JuniorGames
 
     public class LightableButton : ILightableButton
     {
+        private static readonly TimeSpan DebounceTimeSpan = TimeSpan.FromMilliseconds(10);
         private readonly GpioController gpioController;
         private bool isDisposed;
 
+        private PinValue oldValue = PinValue.Low;
 
         public LightableButton(GpioController gpioController, LightableButtonConfig config)
         {
             Log.Information($"Creating LightableButton for {config.Identifier.Color} {config.Identifier.Player}");
-            
+
             this.gpioController = gpioController;
             this.Config = config;
 
@@ -46,6 +48,24 @@ namespace JuniorGames
             this.Dispose(true);
         }
 
+        public async Task SetLight(bool enabled, TimeSpan? milliseconds = null)
+        {
+            //var oldValue = this.gpioController.Read(this.Config.LedPin);
+
+            var newValue = enabled ? PinValue.High : PinValue.Low;
+            this.gpioController.Write(this.Config.LedPin, newValue);
+
+            if (milliseconds.HasValue)
+            {
+                await Task.Delay(milliseconds.Value);
+                this.gpioController.Write(this.Config.LedPin, this.oldValue);
+            }
+            else
+            {
+                this.oldValue = newValue;
+            }
+        }
+
         private event Action<ButtonIdentifier> OnButtonDown;
 
         private event Action<ButtonIdentifier> OnButtonUp;
@@ -53,22 +73,21 @@ namespace JuniorGames
         private void CreateObservableButtons()
         {
             Log.Verbose("Register button callback...");
-            this.gpioController.RegisterCallbackForPinValueChangedEvent(this.Config.ButtonPin, PinEventTypes.Rising | PinEventTypes.Falling, this.OnButtonChanged);
+            this.gpioController.RegisterCallbackForPinValueChangedEvent(this.Config.ButtonPin,
+                PinEventTypes.Rising | PinEventTypes.Falling, this.OnButtonChanged);
 
-            var downSource = Observable.FromEvent<ButtonIdentifier>(
-                action => this.OnButtonDown += action,
+            var downSource = Observable.FromEvent<ButtonIdentifier>(action => this.OnButtonDown += action,
                 action => this.OnButtonDown -= action);
-            var upSource = Observable.FromEvent<ButtonIdentifier>(
-                action => this.OnButtonUp += action,
+            var upSource = Observable.FromEvent<ButtonIdentifier>(action => this.OnButtonUp += action,
                 action => this.OnButtonUp -= action);
 
-            this.ButtonDown = downSource.Throttle(TimeSpan.FromMilliseconds(10));
-            this.ButtonUp = upSource.Throttle(TimeSpan.FromMilliseconds(10));
+            this.ButtonDown = downSource.Throttle(DebounceTimeSpan);
+            this.ButtonUp = upSource.Throttle(DebounceTimeSpan);
             this.Button = downSource
                 .Select(d => new ButtonPressedEventArgs(d, true))
                 .Merge(upSource
                     .Select(d => new ButtonPressedEventArgs(d, false)))
-                .Throttle(TimeSpan.FromMilliseconds(10));
+                .Throttle(DebounceTimeSpan);
         }
 
         private void OnButtonChanged(object sender, PinValueChangedEventArgs args)
@@ -93,34 +112,15 @@ namespace JuniorGames
                     throw new ArgumentOutOfRangeException();
             }
         }
-        
+
         protected virtual void Dispose(bool isDisposing)
         {
             Log.Verbose($"Disposing Lightable Button: {this.Config.Identifier.Color} {this.Config.Identifier.Player}");
             if (isDisposing && !this.isDisposed)
             {
                 this.isDisposed = true;
-                this.gpioController.UnregisterCallbackForPinValueChangedEvent(this.Config.ButtonPin, this.OnButtonChanged);
-            }
-        }
-
-        private PinValue oldValue = PinValue.Low;
-
-        public async Task SetLight(bool enabled, TimeSpan? milliseconds = null)
-        {
-            //var oldValue = this.gpioController.Read(this.Config.LedPin);
-
-            var newValue = enabled ? PinValue.High : PinValue.Low;
-            this.gpioController.Write(this.Config.LedPin, newValue);
-
-            if (milliseconds.HasValue)
-            {
-                await Task.Delay(milliseconds.Value);
-                this.gpioController.Write(this.Config.LedPin, this.oldValue);
-            }
-            else
-            {
-                this.oldValue = newValue;
+                this.gpioController.UnregisterCallbackForPinValueChangedEvent(this.Config.ButtonPin,
+                    this.OnButtonChanged);
             }
         }
     }

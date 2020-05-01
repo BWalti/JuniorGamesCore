@@ -1,21 +1,14 @@
-﻿using BoxBaseOptions = GameBox.Framework.BoxBaseOptions;
-using ButtonIdentifier = GameBox.Framework.ButtonIdentifier;
-using IBox = GameBox.Framework.IBox;
-
-namespace JuniorGames
+﻿namespace JuniorGames
 {
     using System;
     using System.Device.Gpio;
     using System.Threading.Tasks;
     using Castle.MicroKernel.Registration;
     using Castle.Windsor;
+    using GameBox.Framework;
     using JuniorGames.GamesClean;
     using Microsoft.Extensions.Configuration;
     using Serilog;
-    using Serilog.Core;
-    using Serilog.Formatting.Elasticsearch;
-    using Serilog.Sinks.Elasticsearch;
-    using Serilog.Sinks.SystemConsole.Themes;
 
     internal class Program
     {
@@ -26,7 +19,7 @@ namespace JuniorGames
                 .Build();
 
             Log.Logger = new LoggerConfiguration()
-                .Destructure.ByTransforming<ButtonIdentifier>(bi => new { Player = bi.Player, Color = bi.Color.Name })
+                .Destructure.ByTransforming<ButtonIdentifier>(bi => new {bi.Player, Color = bi.Color.Name})
                 .ReadFrom.Configuration(configuration)
                 .CreateLogger();
 
@@ -45,7 +38,9 @@ namespace JuniorGames
                 {
                     LightUp = TimeSpan.FromMilliseconds(400),
                     Pause = TimeSpan.FromMilliseconds(200),
-                    Retries = 3
+                    Retries = 3,
+                    MaxChainLength = 10,
+                    MaxSpeedFactor = 2
                 }));
 
             container.Register(Component.For<SimpleGame>());
@@ -76,7 +71,7 @@ namespace JuniorGames
             var gpioController = new GpioController(PinNumberingScheme.Logical);
 
             container.Register(Component.For<GpioController>().Instance(gpioController).LifestyleSingleton());
-            container.Register(Component.For<IBox>().ImplementedBy<GameBox>().LifestyleSingleton());
+            container.Register(Component.For<IBox>().ImplementedBy<HardwareGameBox>().LifestyleSingleton());
         }
     }
 }

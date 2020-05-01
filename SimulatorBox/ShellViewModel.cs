@@ -32,7 +32,9 @@ namespace SimulatorBox
             {
                 LightUp = TimeSpan.FromMilliseconds(400),
                 Pause = TimeSpan.FromMilliseconds(200),
-                Retries = 3
+                Retries = 3,
+                MaxChainLength = 5,
+                MaxSpeedFactor = 4
             });
 
             this.GreenOne = new LightyButtonViewModel(Colors.Green, GetLightableButton(gameBox, BoxBase.GreenOneButtonIdentifier));

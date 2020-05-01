@@ -7,7 +7,8 @@
         ButtonPressed,
         ChainCorrectlyRepeated,
         ChainWronglyRepeated,
-        Finish,
-        Start
+        FinishChain,
+        Start,
+        Won
     }
 }

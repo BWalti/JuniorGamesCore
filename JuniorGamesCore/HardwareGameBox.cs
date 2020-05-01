@@ -17,11 +17,11 @@ namespace JuniorGames
     using System.Threading.Tasks;
     using Serilog;
 
-    public sealed class GameBox : BoxBase
+    public sealed class HardwareGameBox : BoxBase
     {
         private readonly IDictionary<ButtonIdentifier, ILightableButton> lookup;
 
-        public GameBox(BoxBaseOptions options, GpioController gpioController) : base(options)
+        public HardwareGameBox(BoxBaseOptions options, GpioController gpioController) : base(options)
         {
             Log.Verbose("Constructing LED Button configs...");
             var lightableButtons = new[]

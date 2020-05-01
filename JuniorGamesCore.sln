@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JukeBox", "JukeBox\JukeBox.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameBox.Framework", "GameBox.Framework\GameBox.Framework.csproj", "{8E7201B8-B71A-4FB7-A67A-262A4D19CFBB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuniorGames.GamesClean", "JuniorGames.GamesClean\JuniorGames.GamesClean.csproj", "{71A0FD87-6C72-4025-94D7-CD8C064B5D5B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuniorGames.GamesClean", "JuniorGames.GamesClean\JuniorGames.GamesClean.csproj", "{71A0FD87-6C72-4025-94D7-CD8C064B5D5B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuniorGames.GamesClean.Tests", "JuniorGames.GamesClean.Tests\JuniorGames.GamesClean.Tests.csproj", "{424A5F9B-587D-4D51-ABB6-72ABB884B72F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{71A0FD87-6C72-4025-94D7-CD8C064B5D5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{71A0FD87-6C72-4025-94D7-CD8C064B5D5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{71A0FD87-6C72-4025-94D7-CD8C064B5D5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{424A5F9B-587D-4D51-ABB6-72ABB884B72F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{424A5F9B-587D-4D51-ABB6-72ABB884B72F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{424A5F9B-587D-4D51-ABB6-72ABB884B72F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{424A5F9B-587D-4D51-ABB6-72ABB884B72F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,7 +1,6 @@
 ﻿namespace JuniorGames.GamesClean
 {
     using System;
-    using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Linq;
     using System.Threading.Tasks;
@@ -11,46 +10,6 @@
 
     public class SimpleGame
     {
-        public class SimpleGameStatus
-        {
-            public SimpleGameStatus(List<ILightableButton> chain)
-            {
-                this.Chain = chain;
-                this.FaultCounter = 0;
-                this.InputIndex = 0;
-            }
-
-            public int InputIndex { get; private set; }
-
-            public List<ILightableButton> Chain { get; }
-
-            public int FaultCounter { get; private set; }
-
-            public ButtonIdentifier ExpectedButton => this.Chain[this.InputIndex].ButtonIdentifier;
-
-            internal void IncreaseFaultCounter()
-            {
-                this.FaultCounter++;
-            }
-
-            internal void IncreaseInputIndex()
-            {
-                this.InputIndex++;
-            }
-
-            internal void ResetInputIndex()
-            {
-                this.InputIndex = 0;
-            }
-
-            public void ResetFaultCounter()
-            {
-                this.FaultCounter = 0;
-            }
-        }
-
-        private SimpleGameOptions Options { get; }
-        
         private readonly IBox box;
 
         private readonly StateMachine<SimpleGameState, SimpleGameEvent>.TriggerWithParameters<ButtonIdentifier>
@@ -60,11 +19,10 @@
         private readonly Random random = new Random();
         private readonly StateMachine<SimpleGameState, SimpleGameEvent> stateMachine;
         private readonly TaskCompletionSource<object> taskCompletionSource;
-        
+
         private IDisposable buttonPressedSubscription;
         private IDisposable lightButtonOnPressSubscription;
-
-        public SimpleGameStatus Status { get; private set; }
+        private SimpleGameTimeSpanCalculator timeSpanCalculator;
 
         public SimpleGame(IBox box, SimpleGameOptions options)
         {
@@ -99,21 +57,44 @@
             this.stateMachine.Configure(SimpleGameState.Success)
                 .OnEntryAsync(this.OnSuccess)
                 .Permit(SimpleGameEvent.DisplayChain, SimpleGameState.DisplayChain)
-                .Permit(SimpleGameEvent.Finish, SimpleGameState.Finished);
+                .Permit(SimpleGameEvent.Won, SimpleGameState.Won);
+
+            this.stateMachine.Configure(SimpleGameState.Won)
+                .OnEntryAsync(this.Won)
+                .Permit(SimpleGameEvent.FinishChain, SimpleGameState.ChainFinished);
 
             this.stateMachine.Configure(SimpleGameState.Fault)
                 .OnEntryAsync(this.OnFault)
                 .Permit(SimpleGameEvent.DisplayChain, SimpleGameState.DisplayChain)
-                .Permit(SimpleGameEvent.Finish, SimpleGameState.Finished);
+                .Permit(SimpleGameEvent.FinishChain, SimpleGameState.ChainFinished);
 
-            this.stateMachine.Configure(SimpleGameState.Finished)
-                .OnEntryAsync(this.OnFinished)
+            this.stateMachine.Configure(SimpleGameState.ChainFinished)
+                .OnEntryAsync(this.OnChainFinished)
                 .Permit(SimpleGameEvent.DisplayChain, SimpleGameState.DisplayChain);
         }
 
+        private SimpleGameOptions Options { get; }
+
+        public SimpleGameStatus Status { get; private set; }
+
         public Task Result => this.taskCompletionSource.Task;
 
-        private async Task OnFinished()
+        private async Task Won()
+        {
+            await this.box.BlinkAll(5);
+            var groups = this.ledButtons.GroupBy(lb => lb.Color);
+
+            foreach (var g in groups)
+            {
+                await this.box.Set(g.Select(_ => _.ButtonIdentifier), true, this.Options.LightUp);
+            }
+
+            await this.box.SetAll(true, TimeSpan.FromSeconds(2));
+            await this.DoublePause();
+            await this.stateMachine.FireAsync(SimpleGameEvent.FinishChain);
+        }
+
+        private async Task OnChainFinished()
         {
             //this.taskCompletionSource.SetResult(1);
             await this.InitializeChain();
@@ -124,7 +105,7 @@
             Log.Information("OnFault");
             this.DisposeButtonSubscriptions();
 
-            await Task.Delay(this.Options.Pause);
+            await this.Pause();
             await this.box.BlinkAll(2);
 
             this.Status.IncreaseFaultCounter();
@@ -135,8 +116,20 @@
             }
             else
             {
-                await this.stateMachine.FireAsync(SimpleGameEvent.Finish);
+                await this.stateMachine.FireAsync(SimpleGameEvent.FinishChain);
             }
+        }
+
+        private async Task Pause()
+        {
+            var calculated = this.CalculatePauseDuration();
+
+            await Task.Delay(calculated);
+        }
+
+        private TimeSpan CalculatePauseDuration()
+        {
+            return this.timeSpanCalculator.GetCurrentPauseDuration();
         }
 
         private void DisposeButtonSubscriptions()
@@ -148,8 +141,11 @@
         private async Task DoublePause()
         {
             Log.Information("DoublePause");
-            await Task.Delay(this.Options.Pause);
-            await Task.Delay(this.Options.Pause);
+
+            var calculated = this.CalculatePauseDuration();
+
+            await Task.Delay(calculated);
+            await Task.Delay(calculated);
         }
 
         private async Task OnSuccess()
@@ -158,10 +154,16 @@
             this.DisposeButtonSubscriptions();
             this.Status.ResetFaultCounter();
 
+            if (this.Status.Chain.Count >= this.Options.MaxChainLength)
+            {
+                await this.stateMachine.FireAsync(SimpleGameEvent.Won);
+                return;
+            }
+
             var newButton = this.PickRandomButton();
             this.Status.Chain.Add(newButton);
 
-            await Task.Delay(this.Options.Pause);
+            await this.Pause();
             await this.box.BlinkAll(1, this.Options.LightUp);
             await this.DoublePause();
             await this.stateMachine.FireAsync(SimpleGameEvent.DisplayChain);
@@ -206,11 +208,12 @@
             var chainButtons = this.Status.Chain.Select(b => b.ButtonIdentifier);
             Log.Information("DoDisplayChain: {@Chain}", chainButtons);
 
+            var lightUp = this.timeSpanCalculator.GetCurrentLightUpDuration();
 
             foreach (var led in this.Status.Chain)
             {
-                await led.SetLight(true, this.Options.LightUp);
-                await Task.Delay(this.Options.Pause);
+                await led.SetLight(true, lightUp);
+                await this.Pause();
             }
 
             await this.stateMachine.FireAsync(SimpleGameEvent.ChainDisplayed);
@@ -220,11 +223,13 @@
         {
             Log.Information("Initialize Chain");
 
-            var chain = Enumerable.Range(0, 3)
+            var chain = Enumerable.Range(0, this.Options.StartLength)
                 .Select(_ => this.PickRandomButton())
                 .ToList();
 
             this.Status = new SimpleGameStatus(chain);
+            this.timeSpanCalculator = new SimpleGameTimeSpanCalculator(this.Options, this.Status);
+
             await this.stateMachine.FireAsync(SimpleGameEvent.DisplayChain);
         }
 

@@ -7,7 +7,8 @@
         AwaitInput,
         Success,
         Fault,
-        Finished,
-        Start
+        ChainFinished,
+        Start,
+        Won
     }
 }
